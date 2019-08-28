@@ -1,3 +1,12 @@
+-- Search corrupted blocks after RMAN
+select * from dba_extents 
+where (file_id,block_id) in (
+     select file#, block# from v$database_block_corruption);
+
+-- ACTION for another session like progress bar
+select s.action, s.* from v$session s where osuser = sys_context('userenv','os_user');
+
+-- PLSQL block to find corrupted blocks
 set serveroutput on size unlimited
 set timing on
 declare
