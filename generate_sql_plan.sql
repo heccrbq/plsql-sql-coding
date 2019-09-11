@@ -1,3 +1,4 @@
+-- Сформировать sql plan по dba_hist
 select 
     plan_hash_value,
     id,
