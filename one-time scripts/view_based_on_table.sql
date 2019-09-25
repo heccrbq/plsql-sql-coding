@@ -1,8 +1,15 @@
-/**********************************************************************************************
-  Создание view по имени ключевой таблицы один к одному.
-  Правила именования таковы, что view_name отсекает букву T в первом слоге имени таблицы: 
-  table_name FT_APPLICATION_FRAUD_RULE_AD => view name F_APPLICATION_FRAUD_RULE_AD 
-**********************************************************************************************/
+/**
+ * =============================================================================================
+ * Создание view по имени ключевой таблицы один к одному.
+ * Правила именования таковы, что view_name отсекает букву T в первом слоге имени таблицы: 
+ * table_name FT_APPLICATION_FRAUD_RULE_AD => view name F_APPLICATION_FRAUD_RULE_AD 
+ * =============================================================================================
+ * @param   p_table_owner   Владелец таблицы
+ * @param   p_table_table   Наименование таблицы
+ * =============================================================================================
+ * Описание полей:
+ *   - CLOB поле с ddl скриптом создания view
+ */
 with source as
 (
   select --+materialize
@@ -15,8 +22,8 @@ with source as
     col_comm.comments
   from dba_tab_columns col,
     dba_col_comments col_comm
-  where col.owner = 'OWNER_DWH'
-    and col.table_name IN ('FT_APPLICATION_FRAUD_RULE_AD')
+  where col.owner = 'OWNER_DWH' /*p_table_owner*/
+    and col.table_name = 'FT_APPLICATION_FRAUD_RULE_AD'/*p_table_table*/
     and col_comm.owner(+) = col.owner
     and col_comm.table_name(+) = col.table_name
     and col_comm.column_name(+) = col.column_name
