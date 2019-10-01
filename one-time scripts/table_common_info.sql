@@ -32,8 +32,8 @@ from dba_tables dt
   left join dba_part_tables dpt on dpt.owner = dt.owner and dpt.table_name = dt.table_name
   left join dba_indexes di on di.table_owner = dt.owner and di.table_name = dt.table_name
   inner join dba_segments ds on (ds.owner, ds.segment_name) in ((dt.owner, dt.table_name), (di.owner, di.index_name))
-where dt.owner = 'OWNER_DWH' /*p_table_owner*/
-  and dt.table_name = 'FT_CREDIT_BUREAU_DATA_TT' /*p_table_table*/
+where dt.owner = 'OWNER_DWH' /*:p_table_owner*/
+  and dt.table_name = 'FT_CREDIT_BUREAU_DATA_TT' /*:p_table_table*/
 group by dt.owner,
   dt.table_name,
   dt.temporary,
