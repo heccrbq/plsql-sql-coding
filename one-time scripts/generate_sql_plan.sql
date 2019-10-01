@@ -17,5 +17,6 @@ select
     filter_predicates,
     p.parent_id
 from dba_hist_sql_plan p
-where sql_id = '3srshtyjrcghw'
+where sql_id = '3srshtyjrcghw'    
+    and child_number = 0
 order by plan_hash_value, id
