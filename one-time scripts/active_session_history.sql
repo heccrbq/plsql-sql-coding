@@ -1,36 +1,7 @@
 select sid, sql_id, sql_child_number, event from v$session where sid <> userenv('sid') and status = 'ACTIVE' and osuser = 'dvbykov';
 
 
-select /*abrakadabra*/ /*+gather_plan_statistics*/count(1) from (SELECT
-              cn.*
-       FROM
-              a4m.tObjectUid O
-       JOIN a4m.tObjAddPropData_CLIENT userprop1 ON
-              userprop1.Branch = 1
-              AND userprop1.PropID = 1893
-              AND userprop1.ownerID = o.id
-       JOIN a4m.tcontract cn ON
-              SUBSTR(O.objuid, 8) = cn.idClient
-       JOIN a4m.TCONTRACTTYPEITEMS tci ON
-              tci.branch = cn.branch
-              AND tci.type = cn.type
-       JOIN a4m.TCONTRACTITEM i ON
-              tci.itemcode = i.itemcode
-              AND i.branch = tci.branch
-              AND i.NO = cn.no
-       JOIN a4m.taccount a ON
-              i.key = a.accountno
-              AND i.branch = a.branch
-       WHERE
-              O.Branch = 1
-              AND O.objUid LIKE 'CLIENT:%'
-              AND ( userprop1.valuenum IN (1))
-              AND tci.description = 'Карточный счет'
-              AND COALESCE(cn.status,
-              '999') = COALESCE(TRIM(' '),
-              '999')
-              AND a.currencyno = NVL(810, a.currencyno)
-              AND 101 > ROWNUM);
+SQL > SELECT /*abrakadabra*/ /*+gather_plan_statistics*/ ...
 			  
 /**
  * =============================================================================================
