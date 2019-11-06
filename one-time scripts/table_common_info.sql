@@ -8,6 +8,7 @@
  * Описание полей:
  *   - Владелец
  *   - наименование таблицы
+ *   - наименование тейблспейса
  *   - Количество строк по статистике
  *   - Занимаемое место сегментом
  *   - Ялвяется ли таблица GTT
@@ -19,6 +20,7 @@
  */
 select dt.owner, 
   dt.table_name,
+  coalesce(dt.tablespace_name, dpt.def_tablespace_name) tablespace_name,
   to_char(dt.num_rows,'fm999G999G999G999') num_rows_by_stats,
   case when sum(ds.bytes) >= power(2,30) then to_char(round(sum(ds.bytes) / 1024 / 1024 / 1024, 5)) || ' Gb' else to_char(round(sum(ds.bytes) / 1024 / 1024, 5)) || ' Mb' end local_storage,
   dt.temporary,
