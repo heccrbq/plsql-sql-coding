@@ -6,7 +6,7 @@ begin
 end;
 select f(5) from dual;
 /
--- мат аппарат перемножегния
+-- мат аппарат перемножения
 select trunc(exp(sum(ln(level)))) x from dual connect by level <= 5;
 /
 -- переменожение через Dynamic SQL
