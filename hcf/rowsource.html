@@ -1,0 +1,269 @@
+<!-- Oracle execution plan operations -->
+
+<!-- 
+with t as (select distinct trim(operation || ' ' || options) sqlplan from dba_hist_sql_plan)
+select distinct '<li><a href="#' || regexp_replace(sqlplan, '[[:space:]]|[[:punct:]]', '') || '">' || sqlplan || '</a></li>' x from t order by 1;
+-->
+
+<html>
+	<head>
+		<style>
+			details > * { margin-left: 20px; }			
+			summary:focus { outline: none; }
+		</style>
+	<head>
+	<body>
+		<ul>
+			<li><a href="#BITMAPAND">BITMAP AND</a></li>
+			<li><a href="#BITMAPCONVERSIONFROMROWIDS">BITMAP CONVERSION FROM ROWIDS</a></li>
+			<li><a href="#BITMAPCONVERSIONTOROWIDS">BITMAP CONVERSION TO ROWIDS</a></li>
+			<li><a href="#BITMAPOR">BITMAP OR</a></li>
+			<li><a href="#BUFFERSORT">BUFFER SORT</a></li>
+			<li><a href="#BUFFERSORTREUSE">BUFFER SORT (REUSE)</a></li>
+			<li><a href="#COLLECTIONITERATORCONSTRUCTORFETCH">COLLECTION ITERATOR CONSTRUCTOR FETCH</a></li>
+			<li><a href="#COLLECTIONITERATORPICKLERFETCH">COLLECTION ITERATOR PICKLER FETCH</a></li>
+			<li><a href="#CONCATENATION">CONCATENATION</a></li>
+			<li><a href="#CONNECTBYNOFILTERINGWITHSTARTWITH">CONNECT BY NO FILTERING WITH START-WITH</a></li>
+			<li><a href="#CONNECTBYNOFILTERINGWITHSWUNIQUE">CONNECT BY NO FILTERING WITH SW (UNIQUE)</a></li>
+			<li><a href="#CONNECTBYPUMP">CONNECT BY PUMP</a></li>
+			<li><a href="#CONNECTBYWITHFILTERING">CONNECT BY WITH FILTERING</a></li>
+			<li><a href="#CONNECTBYWITHFILTERINGUNIQUE">CONNECT BY WITH FILTERING (UNIQUE)</a></li>
+			<li><a href="#CONNECTBYWITHOUTFILTERING">CONNECT BY WITHOUT FILTERING</a></li>
+			<li><a href="#COUNT">COUNT</a></li>
+			<li><a href="#COUNTSTOPKEY">COUNT STOPKEY</a></li>
+			<li><a href="#CREATEINDEXSTATEMENT">CREATE INDEX STATEMENT</a></li>
+			<li><a href="#CREATETABLESTATEMENT">CREATE TABLE STATEMENT</a></li>
+			<li><a href="#DELETE">DELETE</a></li>
+			<li><a href="#DELETESTATEMENT">DELETE STATEMENT</a></li>
+			<li><a href="#DIRECTLOADINTOCURSORDURATIONMEMORY">DIRECT LOAD INTO (CURSOR DURATION MEMORY)</a></li>
+			<li><a href="#EXTERNALTABLEACCESSFULL">EXTERNAL TABLE ACCESS FULL</a></li>
+			<li><a href="#FASTDUAL">FAST DUAL</a></li>
+			<li><a href="#FILTER">FILTER</a></li>
+			<li><a href="#FIRSTROW">FIRST ROW</a></li>
+			<li><a href="#FIXEDTABLEFIXEDINDEX">FIXED TABLE FIXED INDEX</a></li>
+			<li><a href="#FIXEDTABLEFULL">FIXED TABLE FULL</a></li>
+			<li><a href="#FORUPDATE">FOR UPDATE</a></li>
+			<li><a href="#HASHGROUPBY">HASH GROUP BY</a></li>
+			<li><a href="#HASHGROUPBYPIVOT">HASH GROUP BY PIVOT</a></li>
+			<li><a href="#HASHJOIN">HASH JOIN</a></li>
+			<li><a href="#HASHJOINANTI">HASH JOIN ANTI</a></li>
+			<li><a href="#HASHJOINANTIBUFFERED">HASH JOIN ANTI BUFFERED</a></li>
+			<li><a href="#HASHJOINANTINA">HASH JOIN ANTI NA</a></li>
+			<li><a href="#HASHJOINBUFFERED">HASH JOIN BUFFERED</a></li>
+			<li><a href="#HASHJOINFULLOUTER">HASH JOIN FULL OUTER</a></li>
+			<li><a href="#HASHJOINOUTER">HASH JOIN OUTER</a></li>
+			<li><a href="#HASHJOINOUTERBUFFERED">HASH JOIN OUTER BUFFERED</a></li>
+			<li><a href="#HASHJOINRIGHTANTI">HASH JOIN RIGHT ANTI</a></li>
+			<li><a href="#HASHJOINRIGHTANTIBUFFERED">HASH JOIN RIGHT ANTI BUFFERED</a></li>
+			<li><a href="#HASHJOINRIGHTOUTER">HASH JOIN RIGHT OUTER</a></li>
+			<li><a href="#HASHJOINRIGHTOUTERBUFFERED">HASH JOIN RIGHT OUTER BUFFERED</a></li>
+			<li><a href="#HASHJOINRIGHTSEMI">HASH JOIN RIGHT SEMI</a></li>
+			<li><a href="#HASHJOINRIGHTSEMIBUFFERED">HASH JOIN RIGHT SEMI BUFFERED</a></li>
+			<li><a href="#HASHJOINSEMI">HASH JOIN SEMI</a></li>
+			<li><a href="#HASHUNIQUE">HASH UNIQUE</a></li>
+			<li><a href="#INDEXBUILDNONUNIQUE">INDEX BUILD NON UNIQUE</a></li>
+			<li><a href="#INDEXBUILDUNIQUE">INDEX BUILD UNIQUE</a></li>
+			<li><a href="#INDEXFASTFULLSCAN">INDEX FAST FULL SCAN</a></li>
+			<li><a href="#INDEXFULLSCAN">INDEX FULL SCAN</a></li>
+			<li><a href="#INDEXRANGESCAN">INDEX RANGE SCAN</a></li>
+			<li><a href="#INDEXRANGESCANDESCENDING">INDEX RANGE SCAN DESCENDING</a></li>
+			<li><a href="#INDEXRANGESCANMINMAX">INDEX RANGE SCAN (MIN/MAX)</a></li>
+			<li><a href="#INDEXSAMPLEFASTFULLSCAN">INDEX SAMPLE FAST FULL SCAN</a></li>
+			<li><a href="#INDEXSKIPSCAN">INDEX SKIP SCAN</a></li>
+			<li><a href="#INDEXUNIQUESCAN">INDEX UNIQUE SCAN</a></li>
+			<li><a href="#INLISTITERATOR">INLIST ITERATOR</a></li>
+			<li><a href="#INSERTSTATEMENT">INSERT STATEMENT</a></li>
+			<li><a href="#JOINFILTERCREATE">JOIN FILTER CREATE</a></li>
+			<li><a href="#JOINFILTERUSE">JOIN FILTER USE</a></li>
+			<li><a href="#LOADASSELECT">LOAD AS SELECT</a></li>
+			<li><a href="#LOADASSELECTCURSORDURATIONMEMORY">LOAD AS SELECT (CURSOR DURATION MEMORY)</a></li>
+			<li><a href="#LOADASSELECTHYBRIDTSMHWMB">LOAD AS SELECT (HYBRID TSM/HWMB)</a></li>
+			<li><a href="#LOADASSELECTTEMPSEGMENTMERGE">LOAD AS SELECT (TEMP SEGMENT MERGE)</a></li>
+			<li><a href="#LOADTABLECONVENTIONAL">LOAD TABLE CONVENTIONAL</a></li>
+			<li><a href="#MATVIEWACCESSFULL">MAT_VIEW ACCESS FULL</a></li>
+			<li><a href="#MERGE">MERGE</a></li>
+			<li><a href="#MERGEJOIN">MERGE JOIN</a></li>
+			<li><a href="#MERGEJOINANTINA">MERGE JOIN ANTI NA</a></li>
+			<li><a href="#MERGEJOINCARTESIAN">MERGE JOIN CARTESIAN</a></li>
+			<li><a href="#MERGEJOINOUTER">MERGE JOIN OUTER</a></li>
+			<li><a href="#MERGESTATEMENT">MERGE STATEMENT</a></li>
+			<li><a href="#MINUS">MINUS</a></li>
+			<li><a href="#MULTITABLEINSERT">MULTI-TABLE INSERT</a></li>
+			<li><a href="#NESTEDLOOPS">NESTED LOOPS</a></li>
+			<li><a href="#NESTEDLOOPSANTI">NESTED LOOPS ANTI</a></li>
+			<li><a href="#NESTEDLOOPSOUTER">NESTED LOOPS OUTER</a></li>
+			<li><a href="#NESTEDLOOPSSEMI">NESTED LOOPS SEMI</a></li>
+			<li><a href="#OPTIMIZERSTATISTICSGATHERING">OPTIMIZER STATISTICS GATHERING</a></li>
+			<li><a href="#PARTITIONHASHALL">PARTITION HASH ALL</a></li>
+			<li><a href="#PARTITIONLISTALL">PARTITION LIST ALL</a></li>
+			<li><a href="#PARTITIONLISTSINGLE">PARTITION LIST SINGLE</a></li>
+			<li><a href="#PARTITIONRANGEALL">PARTITION RANGE ALL</a></li>
+			<li><a href="#PARTITIONRANGEALLMINMAX">PARTITION RANGE ALL MIN/MAX</a></li>
+			<li><a href="#PARTITIONRANGEAND">PARTITION RANGE AND</a></li>
+			<li><a href="#PARTITIONRANGEITERATOR">PARTITION RANGE ITERATOR</a></li>
+			<li><a href="#PARTITIONRANGEJOINFILTER">PARTITION RANGE JOIN-FILTER</a></li>
+			<li><a href="#PARTITIONRANGEMULTICOLUMN">PARTITION RANGE MULTI-COLUMN</a></li>
+			<li><a href="#PARTITIONRANGEOR">PARTITION RANGE OR</a></li>
+			<li><a href="#PARTITIONRANGESINGLE">PARTITION RANGE SINGLE</a></li>
+			<li><a href="#PARTITIONREFERENCEALL">PARTITION REFERENCE ALL</a></li>
+			<li><a href="#PARTITIONREFERENCESINGLE">PARTITION REFERENCE SINGLE</a></li>
+			<li><a href="#PARTITIONREFERENCESUBQUERY">PARTITION REFERENCE SUBQUERY</a></li>
+			<li><a href="#PARTJOINFILTERCREATE">PART JOIN FILTER CREATE</a></li>
+			<li><a href="#PXBLOCKITERATOR">PX BLOCK ITERATOR</a></li>
+			<li><a href="#PXCOORDINATOR">PX COORDINATOR</a></li>
+			<li><a href="#PXRECEIVE">PX RECEIVE</a></li>
+			<li><a href="#PXSELECTOR">PX SELECTOR</a></li>
+			<li><a href="#PXSENDBROADCAST">PX SEND BROADCAST</a></li>
+			<li><a href="#PXSENDHASH">PX SEND HASH</a></li>
+			<li><a href="#PXSENDHASHBLOCKADDRESS">PX SEND HASH (BLOCK ADDRESS)</a></li>
+			<li><a href="#PXSENDHYBRIDHASH">PX SEND HYBRID HASH</a></li>
+			<li><a href="#PXSENDHYBRIDHASHSKEW">PX SEND HYBRID HASH (SKEW)</a></li>
+			<li><a href="#PXSENDQCORDER">PX SEND QC (ORDER)</a></li>
+			<li><a href="#PXSENDQCRANDOM">PX SEND QC (RANDOM)</a></li>
+			<li><a href="#PXSENDRANGE">PX SEND RANGE</a></li>
+			<li><a href="#PXSENDROUNDROBIN">PX SEND ROUND-ROBIN</a></li>
+			<li><a href="#RECURSIVEWITHPUMP">RECURSIVE WITH PUMP</a></li>
+			<li><a href="#REMOTE">REMOTE</a></li>
+			<li><a href="#RESULTCACHE">RESULT CACHE</a></li>
+			<li><a href="#SELECTSTATEMENT">SELECT STATEMENT</a></li>
+			<li><a href="#SEQUENCE">SEQUENCE</a></li>
+			<li><a href="#SORTAGGREGATE">SORT AGGREGATE</a></li>
+			<li><a href="#SORTCREATEINDEX">SORT CREATE INDEX</a></li>
+			<li><a href="#SORTGROUPBY">SORT GROUP BY</a></li>
+			<li><a href="#SORTGROUPBYNOSORT">SORT GROUP BY NOSORT</a></li>
+			<li><a href="#SORTGROUPBYROLLUP">SORT GROUP BY ROLLUP</a></li>
+			<li><a href="#SORTGROUPBYSTOPKEY">SORT GROUP BY STOPKEY</a></li>
+			<li><a href="#SORTJOIN">SORT JOIN</a></li>
+			<li><a href="#SORTORDERBY">SORT ORDER BY</a></li>
+			<li><a href="#SORTORDERBYSTOPKEY">SORT ORDER BY STOPKEY</a></li>
+			<li><a href="#SORTUNIQUE">SORT UNIQUE</a></li>
+			<li><a href="#SORTUNIQUENOSORT">SORT UNIQUE NOSORT</a></li>
+			<li><a href="#SORTUNIQUESTOPKEY">SORT UNIQUE STOPKEY</a></li>
+			<li><a href="#STATISTICSCOLLECTOR">STATISTICS COLLECTOR</a></li>
+			<li><a href="#TABLEACCESSBYGLOBALINDEXROWID">TABLE ACCESS BY GLOBAL INDEX ROWID</a></li>
+			<li><a href="#TABLEACCESSBYGLOBALINDEXROWIDBATCHED">TABLE ACCESS BY GLOBAL INDEX ROWID BATCHED</a></li>
+			<li><a href="#TABLEACCESSBYINDEXROWID">TABLE ACCESS BY INDEX ROWID</a></li>
+			<li><a href="#TABLEACCESSBYINDEXROWIDBATCHED">TABLE ACCESS BY INDEX ROWID BATCHED</a></li>
+			<li><a href="#TABLEACCESSBYLOCALINDEXROWID">TABLE ACCESS BY LOCAL INDEX ROWID</a></li>
+			<li><a href="#TABLEACCESSBYLOCALINDEXROWIDBATCHED">TABLE ACCESS BY LOCAL INDEX ROWID BATCHED</a></li>
+			<li><a href="#TABLEACCESSBYUSERROWID">TABLE ACCESS BY USER ROWID</a></li>
+			<li><a href="#TABLEACCESSCLUSTER">TABLE ACCESS CLUSTER</a></li>
+			<li><a href="#TABLEACCESSFULL">TABLE ACCESS FULL</a></li>
+			<li><a href="#TABLEACCESSSAMPLE">TABLE ACCESS SAMPLE</a></li>
+			<li><a href="#TABLEACCESSSAMPLEBYROWIDRANGE">TABLE ACCESS SAMPLE BY ROWID RANGE</a></li>
+			<li><a href="#TEMPTABLETRANSFORMATION">TEMP TABLE TRANSFORMATION</a></li>
+			<li><a href="#UNIONALL">UNION-ALL</a></li>
+			<li><a href="#UNIONALLPARTITION">UNION-ALL PARTITION</a></li>
+			<li><a href="#UNIONALLPUSHEDPREDICATE">UNION ALL PUSHED PREDICATE</a></li>
+			<li><a href="#UNIONALLRECURSIVEWITHBREADTHFIRST">UNION ALL (RECURSIVE WITH) BREADTH FIRST</a></li>
+			<li><a href="#UPDATE">UPDATE</a></li>
+			<li><a href="#UPDATESTATEMENT">UPDATE STATEMENT</a></li>
+			<li><a href="#VIEW">VIEW</a></li>
+			<li><a href="#VIEWPUSHEDPREDICATE">VIEW PUSHED PREDICATE</a></li>
+			<li><a href="#WINDOWBUFFER">WINDOW BUFFER</a></li>
+			<li><a href="#WINDOWCHILDPUSHEDRANK">WINDOW CHILD PUSHED RANK</a></li>
+			<li><a href="#WINDOWNOSORT">WINDOW NOSORT</a></li>
+			<li><a href="#WINDOWNOSORTSTOPKEY">WINDOW NOSORT STOPKEY</a></li>
+			<li><a href="#WINDOWSORT">WINDOW SORT</a></li>
+			<li><a href="#WINDOWSORTPUSHEDRANK">WINDOW SORT PUSHED RANK</a></li>
+			<li><a href="#XMLTABLEEVALUATION">XMLTABLE EVALUATION</a></li>
+			<li><a href="#XPATHEVALUATION">XPATH EVALUATION</a></li>
+		</ul>
+		
+		<div id="EXAMPLE">
+			<h3>EXAMPLE</h3>
+			<p>DESCRIPTION</p>
+			<details>
+				<summary>code work</summary>
+				<pre></pre>
+			</details>
+			<details>
+				<summary>hints & tricks</summary>
+				<p>Операция относится к ветке трансформаций: </p>
+				<p>хинты: </p>
+				<pre></pre>
+			</details>
+			<details>
+				<summary>why</summary>
+				<p></p>
+			</details>
+			<details>
+				<summary>references</summary>
+				<a href="https://google.com">How IT works</a>
+			</details>
+		</div>
+		
+		<div id="TABLEACCESSFULL">
+			<h3>TABLE ACCESS FULL</h3>
+			<p>Операция полного сканирования таблицы, также известная, как FULL TABLE SCAN. Считывается сегмент до отметки HWM в память процесса и дальше уже применяются filter predicate,
+			   выполняются операция по соединению и тд. 
+			   Физическая реализация TABLE ACCESS FULL включает в себя возможность поднятия данных через db file sequential read, db file scattered read, direct path read.<br/>
+			   db file sequential read применяется в случае, когда часть считанных блоков была изменена в процесе работы запроса и тогда проиходит одноблочное чтение измененных блоков из undo сегмента.<br/>
+			   direct path read - считываение таблицы напрямую в память процесса минуя buffer_pool. Чтобы добиться этого события добавить запрос /*+parallel(2)*/<br/>
+			   Стоит помнить про чтение до Low HWM (multiblock) и чтение блоков между Low HWN и HWM (sequential).
+			   </p>
+			<details>
+				<summary>code work</summary>
+				<pre>drop table dropme purge;
+
+create table dropme pctfree 0 as select * from dual connect by level <= 10;
+				
+exec dbms_stats.gather_table_stats(user, 'DROPME');
+
+explain plan for
+select * from dropme where dummy = 'X';
+
+select * from table(dbms_xplan.display);
+
+----------------------------------------------------------------------------
+| Id  | Operation         | Name   | Rows  | Bytes | Cost (%CPU)| Time     |
+----------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |        |    10 |    20 |     3   (0)| 00:00:01 |
+|*  1 |  TABLE ACCESS FULL| DROPME |    10 |    20 |     3   (0)| 00:00:01 |
+----------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+--------------------------------------------------- 
+   1 - filter("DUMMY"='X')</pre>
+			</details>
+			<details>
+				<summary>hints & tricks</summary>
+				<p>Операция относится к ветке трансформаций: ALL -> COMPILATION -> CBO -> ACCESS_PATH -> FULL</p>
+				<p>хинты: FULL</p>
+				<pre>select /*+full(d)*/ * from dropme d</pre>
+			</details>
+			<details>
+				<summary>why</summary>
+				<p>Есть несколько причин почему оптимизатор может использовать операцию полного сканирования таблицы:</p>
+				<p>- </p>
+			</details>
+			<details>
+				<summary>references</summary>
+				<a href="https://google.com">How IT works</a>
+			</details>
+		</div>
+		
+		<div id="TABLEACCESSSAMPLE">
+			<h3>TABLE ACCESS SAMPLE</h3>
+			<p>Операция частичного сканирования сегмента. Поднимается количество блоков с диска в процентном соотношении, указанного в SAMPLE</p>
+			<details>
+				<summary>code work</summary>
+				<pre></pre>
+			</details>
+			<details>
+				<summary>hints & tricks</summary>
+				<p>Операция относится к ветке трансформаций: </p>
+				<p>хинты: </p>
+				<pre></pre>
+			</details>
+			<details>
+				<summary>why</summary>
+				<p></p>
+			</details>
+			<details>
+				<summary>references</summary>
+				<a href="https://google.com">How IT works</a>
+			</details>
+		</div>
+	</body>
+</html>
