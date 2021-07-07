@@ -325,3 +325,17 @@ from (
 )
 group by sql_id, plan_hash_value, child_number, id, options, index_owner, index_name, table_name, access_predicates
 having sum(out_of_access_predicates) <> count(out_of_access_predicates)
+
+
+
+
+
+1. Использование регулярных выражений. Лучше заменить на substr+instr. регулярка работает в 40 раз дольше.
+2. Использование nullif. Nuliif разворачивается в case when и поэтому если первым аргументов тяжелая not deterministic функция, то может работать долго.
+
+	----- Current SQL Statement for this session (sql_id=dhsh84asrhd9y) -----
+	select nullif(dummy, 'Y') from dual
+	
+	Final query after transformations:******* UNPARSED QUERY IS *******
+	SELECT CASE "DUAL"."DUMMY" WHEN 'Y' THEN NULL ELSE "DUAL"."DUMMY" END  "NULLIF(DUMMY,'Y')" FROM "SYS"."DUAL" "DUAL"
+3. Посмотреть неявное преобразование типов в access и filter predicates.
