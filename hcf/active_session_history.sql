@@ -306,6 +306,174 @@ order by s.plan_hash_value, s.child_number, sp.id, t.column_value;
 
 
 
+
+
+-- undo + hist
+
+with source as 
+(
+    select '6vc7dpyv10fnd' sql_id, 1661035582 plan_hash_value, 0 child_number, 16777216 sql_exec_id from dual
+),
+settings as 
+(
+    select 0 enable_events from dual
+),
+ash as
+(   -- строки с sql_exec_id is null and in_parse = 'Y' and in_hard_parse = 'Y' учтены в ASH: parse - в это время происходит парсинг запроса.
+    select /*+materialize*/
+        ash.*
+    from v$active_session_history ash
+		join source s on ash.sql_id = s.sql_id 
+					 and ash.sql_plan_hash_value = s.plan_hash_value 
+					 and ash.sql_exec_id = s.sql_exec_id
+                     and ash.sql_child_number = s.child_number
+)
+
+-- Статистика выполнения запроса по sql_id и plan_hash_value из gv$sql
+select
+    null id,
+    null parent_id,
+    null depth,
+    'SQLSTAT: ' ||
+    'SQL_ID = ' || st.sql_id || 
+    ', hv = '   || st.plan_hash_value ||
+    ', cn = '   || st.child_number ||
+    ', e = '    || sum(st.executions) || 
+    ', ela = '  || to_char(round(sum(st.elapsed_time) / greatest(sum(st.executions), 1) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') || 
+    ', cpu = '  || to_char(round(sum(st.cpu_time)     / greatest(sum(st.executions), 1) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') || 
+    ', io = '   || to_char(round(sum(st.user_io_wait_time)       / greatest(sum(st.executions), 1) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ||
+    ', disk = ' || round(sum(st.disk_reads)           / greatest(sum(st.executions), 1)) ||
+    ', lio = '  || round(sum(st.buffer_gets)          / greatest(sum(st.executions), 1)) || 
+    ', r = '    || round(sum(st.rows_processed)       / greatest(sum(st.executions), 1)) ||
+    ', px = '   || round(sum(st.px_servers_executions)     / greatest(sum(st.executions), 1)) sqlplan,
+    null ash_count,
+    to_char(round(sum(st.elapsed_time) / greatest(sum(st.executions), 1) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ela,
+    null db_time,
+    to_char(round(sum(st.cpu_time)     / greatest(sum(st.executions), 1) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') cpu_time,
+    null px,
+    null tmp,
+    null pga,
+    null undo,
+    null hist
+from gv$sql st
+where (st.sql_id, st.plan_hash_value, child_number) in (select sql_id, plan_hash_value, child_number from source)
+--    and (st.instance_number, st.snap_id) in 
+--        (select 
+--            s.instance_number, s.snap_id 
+--        from dba_hist_snapshot s 
+--        where s.snap_id in 
+--            (select /*+no_merge */ distinct ash.snap_id from ash))
+group by st.sql_id, st.plan_hash_value, st.child_number
+union all
+-- Статистика конкретного SQL_EXEC_ID в разрезе точечных snap_id
+select
+    null id,
+    null parent_id,
+    null depth,
+    'ASH: ' ||
+    'SQL_EXEC_ID = ' || ash.sql_exec_id ||
+    ', from = ' || ash.sql_exec_start ||
+    ', parse = ' || 
+        to_char(
+            round(
+                (select 
+                    sum(h.tm_delta_time) / 1e6
+                from v$active_session_history h 
+                where h.sql_id = ash.sql_id and h.sql_plan_hash_value = ash.sql_plan_hash_value and h.sql_child_number = ash.sql_child_number 
+                    and h.sql_exec_id = ash.sql_exec_id and h.session_id = ash.session_id and h.session_serial# = ash.session_serial#
+                    and h.in_parse = 'Y' and h.in_hard_parse = 'Y')
+            , 2)
+        , 'fm999G990D00', 'nls_numeric_characters=''. ''') ||
+    ', ela = '  || to_char(round(sum(ash.tm_delta_time)     / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ||
+    ', db = '  || to_char(round(sum(ash.tm_delta_db_time)  / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ||
+    ', cpu = ' || to_char(round(sum(ash.tm_delta_cpu_time) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ||
+    ', waiting (%) = '  || to_char(round(count(decode(ash.session_state, 'WAITING', 1)) / count(1) * 100, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ||
+    ', on cpu (%) = '  || to_char(round(count(decode(ash.session_state, 'ON CPU', 1)) / count(1) * 100, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') sqlplan,
+    count(1) ash_count,
+    to_char(round(sum(ash.tm_delta_time)     / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ela,
+    to_char(round(sum(ash.tm_delta_db_time)  / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') db_time,
+    to_char(round(sum(ash.tm_delta_cpu_time) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') cpu_time,
+    null px,
+    null tmp,
+    null pga,
+    count((select df.relative_fno from dba_data_files df join dba_tablespaces dt on df.tablespace_name = dt.tablespace_name where dt.contents = 'UNDO' and df.relative_fno = ash.current_file#)) undo,
+    null hist
+from ash
+group by ash.sql_id, ash.sql_plan_hash_value, ash.sql_child_number, ash.sql_exec_id, ash.sql_exec_start, ash.session_id, ash.session_serial#
+union all
+select
+    sp.id, sp.parent_id, nullif(sp.depth - 1, -1) depth, 
+    lpad(' ', 4*depth) || sp.operation || nvl2(sp.optimizer, '  Optimizer=' || sp.optimizer, null) ||
+    nvl2(sp.options, ' (' || sp.options || ')', null) || 
+    nvl2(sp.object_name, ' OF ''' || nvl2(sp.object_owner, sp.object_owner || '.', null) || sp.object_name || '''', null) ||
+    decode(sp.object_type, 'INDEX (UNIQUE)', ' (UNIQUE)') ||
+    '  (Cost=' || cost || ' Card=' || sp.cardinality || ' Bytes=' || bytes || ')' sqlplan,
+    ash.ash_count,
+    to_char(round(ash.tm_time  / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ela,
+    to_char(round(ash.db_time  / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') db_time,
+    to_char(round(ash.cpu_time / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') cpu_time,
+    ash.px,
+    ash.tmp,
+    ash.pga,
+    ash.undo,
+    to_char(round(100 * ratio_to_report(ash.db_time)over(), 2), 'fm00D00', 'nls_numeric_characters = ''.,') ||
+        case when ash.db_time is not null then
+            '%(cpu ' || to_char(round(100 * ash.cpu_time/ash.db_time, 2), 'fm00D00', 'nls_numeric_characters = ''.,') || '%' ||
+            ' wait ' || to_char(round(100 * (ash.db_time - ash.cpu_time)/ash.db_time, 2), 'fm00D00', 'nls_numeric_characters = ''.,') || '%)'
+        end  ||
+        case when ratio_to_report(ash.db_time)over() >= 0.005 then rpad(' ', 1 + round(100 * ratio_to_report(ash.db_time)over()), '*') end hist
+from gv$sql_plan sp
+    left join
+        (select /*+*no_merge*/
+            ash.sql_id,
+            ash.sql_plan_hash_value,
+            ash.sql_plan_line_id,
+            count(1) ash_count,
+            sum(ash.tm_delta_time) tm_time,
+            sum(ash.tm_delta_db_time) db_time,
+            sum(ash.tm_delta_cpu_time) cpu_time,
+            count(distinct qc_session_id) px,
+            round(max(temp_space_allocated)/1024/1024, 3) tmp,
+            round(max(pga_allocated)/1024/1024, 3) pga,
+            count((select df.relative_fno from dba_data_files df join dba_tablespaces dt on df.tablespace_name = dt.tablespace_name where dt.contents = 'UNDO' and df.relative_fno = ash.current_file#)) undo
+        from ash
+        group by ash.sql_id,
+            ash.sql_plan_hash_value,
+            ash.sql_plan_line_id) ash 
+    on ash.sql_id = sp.sql_id
+        and ash.sql_plan_hash_value = sp.plan_hash_value
+        and ash.sql_plan_line_id = sp.id
+where (sp.sql_id, sp.plan_hash_value) in (select sql_id, plan_hash_value from source)
+union all
+select
+    ash.sql_plan_line_id id,
+    null parent_id,
+    null depth,
+    lpad('| ', 2 + (select 4*(sp.depth+1) from dba_hist_sql_plan sp where sp.sql_id = ash.sql_id and sp.plan_hash_value = ash.sql_plan_hash_value and sp.id = ash.sql_plan_line_id)) || 
+    rpad(lower(ash.session_state), 7) || ' | ' ||  
+    rpad(coalesce(ash.event, ' '), max(length(ash.event))over(partition by ash.sql_plan_line_id)) || ' | ' || 
+    lpad(to_char(round((ratio_to_report(count(1)) over (partition by ash.sql_plan_line_id))*100, 2), 'fm999G990D00', 'nls_numeric_characters=''. '''), 5) || '% |' as top_event,
+    count(1) ash_count,
+    to_char(round(sum(ash.tm_delta_time)     / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') ela,
+    to_char(round(sum(ash.tm_delta_db_time)  / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') db_time,
+    to_char(round(sum(ash.tm_delta_cpu_time) / 1e6, 2), 'fm999G990D00', 'nls_numeric_characters=''. ''') cpu_time,
+    count(distinct ash.qc_session_id) px,
+    round(max(temp_space_allocated)/1024/1024, 3) tmp,
+    round(max(pga_allocated)/1024/1024, 3) pga,
+    count((select df.relative_fno from dba_data_files df join dba_tablespaces dt on df.tablespace_name = dt.tablespace_name where dt.contents = 'UNDO' and df.relative_fno = ash.current_file#)) undo,
+    null hist
+from ash
+where exists (select 0 from settings where enable_events = 1)
+group by ash.sql_id,
+    ash.sql_plan_hash_value,
+    ash.sql_plan_line_id,
+    ash.session_state, 
+    ash.event
+order by id nulls first, parent_id, sqlplan desc;
+
+
+
+
 select sid,
     event, 
     total_waits, total_timeouts,
