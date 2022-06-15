@@ -1,3 +1,9 @@
+-- BEGIN dbms_session.session_trace_enable(waits=>true, binds => true); END;
+-- EXECUTE DBMS_SYSTEM.SET_SQL_TRACE_IN_SESSION(1159,59930,TRUE);
+-- ALTER SESSION SET SQL_TRACE=TRUE;
+-- DBMS_SESSION.SET_SQL_TRACE (TRUE);
+
+
 -- проверка создался ли trace файл
 select 
     adr_home,
