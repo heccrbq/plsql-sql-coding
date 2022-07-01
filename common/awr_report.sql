@@ -17,5 +17,8 @@ select
     'AWR_' || lower(s.name) || '_' || s.start_snap_id || '_' || s.end_snap_id || '.html' file#,
     dbms_xmlgen.convert(xmlagg(xmlelement(output, t.output || chr(10)) order by rownum).extract('//text()').getclobval(),1) output
 from source s,
-    table(dbms_workload_repository.awr_report_html(s.dbid, s.inst_id, s.start_snap_id, s.end_snap_id)) t
+    table(dbms_workload_repository.awr_report_html(l_dbid =>     s.dbid, 
+                                                   l_inst_num => s.inst_id, 
+                                                   l_bid =>      s.start_snap_id, 
+                                                   l_eid =>      s.end_snap_id)) t
 group by s.name, s.dbid, s.inst_id, s.start_snap_id, s.end_snap_id;
