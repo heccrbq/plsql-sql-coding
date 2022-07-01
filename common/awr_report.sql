@@ -14,8 +14,8 @@ with source as (
 --    select snap_id, begin_interval_time,end_interval_time from dba_hist_snapshot order by snap_id desc
 )
 select
-    'AWR_' || lower(name) || '_' || start_snap_id || '_' || end_snap_id || '.html' file#,
-    dbms_xmlgen.convert(xmlagg(xmlelement(output, output || chr(10)) order by rownum).extract('//text()').getclobval(),1) output
-from source,
-    table(dbms_workload_repository.awr_report_html(dbid, inst_id, start_snap_id, end_snap_id))
-group by name, dbid, inst_id, start_snap_id, end_snap_id;
+    'AWR_' || lower(s.name) || '_' || s.start_snap_id || '_' || s.end_snap_id || '.html' file#,
+    dbms_xmlgen.convert(xmlagg(xmlelement(output, t.output || chr(10)) order by rownum).extract('//text()').getclobval(),1) output
+from source s,
+    table(dbms_workload_repository.awr_report_html(s.dbid, s.inst_id, s.start_snap_id, s.end_snap_id)) t
+group by s.name, s.dbid, s.inst_id, s.start_snap_id, s.end_snap_id;
