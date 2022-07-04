@@ -73,10 +73,25 @@ index_list_tab_space as (
 )
 
 select
-    ilts.index_owner, ilts.index_name, ilts.table_name, ilts.uniqueness, uc.constraint_type, ilts.index_total_mb,
-    ilts.monitoring tbl_monitoring, ou.monitoring idx_monitoring, ou.used index_used, 
-	to_date(ou.start_monitoring, 'mm/dd/yyyy hh24:mi:ss') start_index_monitoring, iu.last_used last_index_used, 
-    ilts.last_analyzed, dm.timestamp last_data_modification, dm.inserts, dm.updates, dm.deletes, 
+    -- common --
+    ilts.index_owner, 
+    ilts.index_name, 
+    ilts.table_name, 
+    ilts.uniqueness, 
+    uc.constraint_type, 
+    ilts.index_total_mb,
+    -- monitoring --
+    ilts.monitoring tbl_monitoring, 
+    ou.monitoring idx_monitoring, 
+    ou.used index_used, 
+	to_date(ou.start_monitoring, 'mm/dd/yyyy hh24:mi:ss') start_index_monitoring,
+    iu.last_used last_index_used, 
+    -- dml stats -- 
+    ilts.last_analyzed, 
+    dm.timestamp last_data_modification, 
+    dm.inserts, 
+    dm.updates, 
+    dm.deletes, 
     round((dm.inserts + dm.updates + dm.deletes) / ((dm.timestamp - ilts.last_analyzed) * 1440)) row_modified_per_minute
 from index_list_tab_space ilts
     left join dba_index_usage iu on iu.owner = ilts.index_owner and iu.name = ilts.index_name
