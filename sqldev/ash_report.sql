@@ -1,6 +1,18 @@
+/**
+ * =============================================================================================
+ * Запрос генерации ASH отчета по указанному sql_id в HTML формате
+ * =============================================================================================
+ * @param   start_date (DATE)        дата начала
+ * @param   end_date   (DATE)        дата окончания
+ * @param   sid        (NUMBER)      SID сессии
+ * @param   sql_id     (VARCHAR2)    SQL_ID конкретного запроса
+ * =============================================================================================
+ * Описание полей:
+ *  - file#  : имя сгенерированного отчета
+ *  - output : содержание отчета
+ */
 with source as (
     select name, dbid, inst_id, null start_date, null end_date, null sid, '9xf8bc1w04q4g' sql_id from gv$database
---    select snap_id, begin_interval_time,end_interval_time from dba_hist_snapshot order by snap_id desc
 )
 select
     'ASH_' || lower(s.name) || '_' || s.start_date || '_' || s.end_date || '.html' file#,
