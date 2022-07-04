@@ -84,7 +84,7 @@ select
     ilts.monitoring tbl_monitoring, 
     ou.monitoring idx_monitoring, 
     ou.used index_used, 
-	to_date(ou.start_monitoring, 'mm/dd/yyyy hh24:mi:ss') start_index_monitoring,
+    to_date(ou.start_monitoring, 'mm/dd/yyyy hh24:mi:ss') start_index_monitoring,
     iu.last_used last_index_used, 
     -- dml stats -- 
     ilts.last_analyzed, 
