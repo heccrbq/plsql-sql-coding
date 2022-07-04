@@ -14,8 +14,12 @@ with source as (
 )
 select 
     'COLUSAGE_' || lower(owner) || '_' || lower(table_name) || '.txt' file#,
-    dbms_stats.report_col_usage(owner, table_name) output 
+    dbms_stats.report_col_usage(ownname => owner, 
+                                tabname => table_name) output 
 from source;
+
+
+
 
 
 /**
