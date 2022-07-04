@@ -15,27 +15,27 @@
  *                        индексы, которые старшне укащанной глубины от sysdate
  * =================================================================================================
  * Описание полей:
- *	- index_owner             : схема/владелец индекса
- *	- index_name              : наименование индекса
- *	- table_name              : наименование таблицы
- *	- uniqueness              : уникальность индекса
- *	- constraint_type         : тип констрейнта, который привязан к индексу
- *	- index_total_mb          : размер сегмента в Мб, выделенный под индекс
- *	- tbl_monitoring          : включен ли мониторинг на таблице, для которой создан индекс
- *	- idx_monitoring          : включен ли мониторинг индекса через ALTER INDEX MONITORING USAGE
+ *  - index_owner             : схема/владелец индекса
+ *  - index_name              : наименование индекса
+ *  - table_name              : наименование таблицы
+ *  - uniqueness              : уникальность индекса
+ *  - constraint_type         : тип констрейнта, который привязан к индексу
+ *  - index_total_mb          : размер сегмента в Мб, выделенный под индекс
+ *  - tbl_monitoring          : включен ли мониторинг на таблице, для которой создан индекс
+ *  - idx_monitoring          : включен ли мониторинг индекса через ALTER INDEX MONITORING USAGE
  *  - index_used              : используется ли индекс, после включения на нём мониторинга
  *  - start_index_monitoring  : Дата и время включения мониторинга индекса 
- *	- last_index_used         : дата и время последнего использования индекса (заполнено, если
- *								              в v$index_usage_info поле index_stats_enabled равно 1 (oracle 12.2+ ))
- *	- last_analyzed           : дата и время последнего сбора статистики
- *	- last_data_modification  : дата последней модификации данным (DML). Заполняется при ключенном 
+ *  - last_index_used         : дата и время последнего использования индекса (заполнено, если
+ *                              в v$index_usage_info поле index_stats_enabled равно 1 (oracle 12.2+ ))
+ *  - last_analyzed           : дата и время последнего сбора статистики
+ *  - last_data_modification  : дата последней модификации данным (DML). Заполняется при ключенном 
  *                              на таблице мониторинге. 
  *                              Данное поле, также как и inserts, updates, deletes заполняются с 
  *                              момента последнего сбора статистики, то есть после last_analyzed
- *	- inserts                 : количество вставленных строк (insert) в таблицу
- *	- updates                 : количество измененных строк (update) в таблице
- *	- deletes                 : количество удаленных строк (delete) из таблицы
- *	- row_modified_per_minute : среднее количество модифицированных строк за период между last_analyzed 
+ *  - inserts                 : количество вставленных строк (insert) в таблицу
+ *  - updates                 : количество измененных строк (update) в таблице
+ *  - deletes                 : количество удаленных строк (delete) из таблицы
+ *  - row_modified_per_minute : среднее количество модифицированных строк за период между last_analyzed 
  *                              и last_data_modification
  * =================================================================================================
  */
@@ -66,8 +66,8 @@ index_list_tab_space as (
         inner join dba_indexes di on di.owner = iloop.index_owner and di.index_name = iloop.index_name
         inner join dba_tables dt on dt.owner = di.table_owner and dt.table_name = di.table_name
         inner join dba_segments ds on ds.owner = iloop.index_owner and ds.segment_name = iloop.index_name
-    where dt.table_name like 'UBRR_%'
-    --where dt.table_name not like 'TTX$%' and dt.table_name not like 'TDS$%' --and dt.table_name not like 'HCF_%'
+--    where dt.table_name like 'UBRR_%'
+--    where dt.table_name not like 'TTX$%' and dt.table_name not like 'TDS$%' --and dt.table_name not like 'HCF_%'
     group by di.owner, di.index_name, di.uniqueness, 
         dt.owner, dt.table_name, dt.last_analyzed, dt.monitoring
 )
