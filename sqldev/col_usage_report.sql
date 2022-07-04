@@ -16,3 +16,12 @@ select
     'COLUSAGE_' || lower(owner) || '_' || lower(table_name) || '.txt' file#,
     dbms_stats.report_col_usage(owner, table_name) output 
 from source;
+
+
+/**
+ * =============================================================================================
+ * Helpful links
+ * =============================================================================================
+ * https://oracle-base.com/articles/12c/automatic-column-group-detection-extended-statistics-12cr1
+ * =============================================================================================
+ */
