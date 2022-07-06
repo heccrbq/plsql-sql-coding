@@ -10,7 +10,6 @@
  */
 with source as (
     select '6hjs0624rwqyy' sql_id from dual
---    select snap_id, begin_interval_time,end_interval_time from dba_hist_snapshot order by snap_id desc
 )
 select 
     'SQLMONITOR_' || sql_id || '.html' file#,
