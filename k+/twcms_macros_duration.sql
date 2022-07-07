@@ -27,7 +27,7 @@ with source as (
 ),
 exec_his as (
     select 
-        branch, code_macros,
+        eh.branch, eh.code_macros,
         count(distinct eh.execid)over(partition by eh.branch, eh.code_macros) exec_count_history,
         round((max(systemdate)keep(dense_rank last order by eh.execid)over(partition by eh.branch, eh.code_macros) - 
                min(systemdate)keep(dense_rank last order by eh.execid)over(partition by eh.branch, eh.code_macros)) * 86400, 2) last_exec_duration, 
