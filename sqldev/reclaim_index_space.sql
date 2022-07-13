@@ -5,9 +5,9 @@
  * =============================================================================================
  *  - estimated used index size based on index & table statistics
  *  - SPACE_USAGE & UNUSED_SPACE
- *  - segment advisor
- *  - CREATE_INDEX_COST 
+ *  - CREATE_INDEX_COST
  *  - explain plan
+ *  - segment advisor
  *  - validate structure
  * =============================================================================================
  * @param   index_owner (VARCHAR2)   Схема владельца индекса
@@ -136,4 +136,27 @@ begin
     dbms_output.put_line('The starting block ID of the last extent which contains data : ' || l_last_used_extent_block_id);
     dbms_output.put_line('The last block within this extent which contains data        : ' || l_last_used_block);
 end;
+/
+
+
+-- #3. CREATE_INDEX_COST
+set serveroutput on size unl
+declare 
+    l_segment_owner varchar2(30) := 'A4M';
+    l_segment_name  varchar2(30) := 'PK_RETADJUSTTRAN';
+    l_segment_type  varchar2(30) := 'INDEX';
+    --
+    l_index_ddl       clob;
+    l_used_bytes      number; 
+    l_allocated_bytes number; 
+begin 
+    l_index_ddl := dbms_metadata.get_ddl(l_segment_type, l_segment_name, l_segment_owner); 
+    
+    dbms_space.create_index_cost (ddl             => l_index_ddl,
+                                  used_bytes      => l_used_bytes,
+                                  alloc_bytes     => l_allocated_bytes);
+                                  
+    dbms_output.put_line('Used,      MBytes: ' || round(l_used_bytes/1024/1024)); 
+    dbms_output.put_line('Allocated, MBytes: ' || round(l_allocated_bytes/1024/1024)); 
+end; 
 /
