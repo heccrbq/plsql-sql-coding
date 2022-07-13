@@ -20,7 +20,6 @@
  with source as (
     select 'A4M' index_owner, 'PK_RETADJUSTTRAN' index_name from dual
 )
-
 select 
     i.owner index_owner, 
     i.index_name, 
@@ -160,3 +159,78 @@ begin
     dbms_output.put_line('Allocated, MBytes: ' || round(l_allocated_bytes/1024/1024)); 
 end; 
 /
+
+
+-- #4. explain plan
+declare
+    l_segment_owner varchar2(30) := 'A4M';
+    l_segment_name  varchar2(30) := 'PK_RETADJUSTTRAN';
+    l_segment_type  varchar2(30) := 'INDEX';
+    --
+    l_index_ddl clob;
+begin
+    l_index_ddl := dbms_metadata.get_ddl(l_segment_type, l_segment_name, l_segment_owner); 
+    
+    execute immediate
+        'explain plan for ' || l_index_ddl;        
+end;
+/
+select * from table(dbms_xplan.display(null, null, 'basic +note'));
+
+
+-- #5. segment advisor
+--   exec dbms_advisor.delete_task('heccrbq_advisor_taks');
+
+declare
+    l_segment_owner varchar2(30) := 'A4M';
+    l_segment_name  varchar2(30) := 'PK_RETADJUSTTRAN';
+    l_segment_type  varchar2(30) := 'INDEX';
+    --
+    l_obj_id   number;
+    l_task_name varchar2(30) := 'heccrbq_advisor_taks';
+begin
+      dbms_advisor.create_task (
+        advisor_name     => 'Segment Advisor', -- dba_advisor_definitions.advisor_name
+        task_name        => l_task_name);
+  
+     dbms_advisor.create_object (
+       task_name        => l_task_name,
+       object_type      => l_segment_type,
+       attr1            => l_segment_owner,
+       attr2            => l_segment_name,
+       attr3            => NULL,
+       attr4            => NULL,
+       attr5            => NULL,
+       object_id        => l_obj_id);
+ 
+     dbms_advisor.set_task_parameter(
+       task_name        => l_task_name,
+       parameter        => 'recommend_all',
+       value            => 'TRUE');
+ 
+     dbms_advisor.execute_task(l_task_name);
+   end;
+/
+
+ with source as (
+    select 'A4M' index_owner, 'PK_RETADJUSTTRAN' index_name from dual
+)
+select 
+    segment_owner,
+    segment_name,
+    round(allocated_space/1024/1024,1) alloc_mb,
+    round( used_space/1024/1024, 1 ) used_mb,
+    round( reclaimable_space/1024/1024) reclaim_mb,
+    round(reclaimable_space/allocated_space*100,0) pctsave,
+    recommendations,
+    c1,
+    c2,
+    c3
+  from table(dbms_space.asa_recommendations()) r
+where (r.segment_owner, r.segment_name) in (select * from source);
+
+
+-- #6. validate structure
+analyze index A4M.PK_RETADJUSTTRAN validate structure; -- 16gb for 14801 sec using db file sequential read
+
+select * from index_stats;
