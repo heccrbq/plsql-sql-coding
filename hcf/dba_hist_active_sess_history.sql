@@ -100,12 +100,12 @@ select
     min(w.snap_id) || ' - ' || max(w.snap_id) snap_range,
     ash.sql_exec_start, 
     cast(max(ash.sample_time) as date) sql_exec_stop, 
-    round((cast(max(ash.sample_time) as date) - ash.sql_exec_start) * 86400) sql_exec_diff,
+--    round((cast(max(ash.sample_time) as date) - ash.sql_exec_start) * 86400) sql_exec_diff,
     round(sum(ash.tm_delta_db_time)/1e6, 2) db_time, 
     round(sum(ash.tm_delta_cpu_time)/1e6, 2) cpu_time, 
     round(sum(ash.delta_read_io_bytes)/1024/1024) read,
     round(sum(ash.delta_write_io_bytes)/1024/1024) write,
-    --
+    -- in flags --
     count(1) wait_count,
     count(nullif(ash.in_parse, 'N')) parse,
     count(nullif(ash.in_hard_parse, 'N')) hard_parse,
@@ -127,41 +127,86 @@ order by sql_exec_start desc nulls last;
 
 
 
+/**
+ * =============================================================================================
+ * Сбор информации о событиях ожидания по конкретному запуску запроса
+ * =============================================================================================
+ * @param   sql_id      (VARCHAR2)   Уникальный идентификатор запроса
+ * @param   sql_exec_id (NUMBER)     Номер выполнения запроса
+ * @param   bsnap_id    (NUMBER)     Уникальный идентификатор снепшота начала выполнения
+ * @param   esnap_id    (NUMBER)     Уникальный идентификатор снепшота окончания выполнения
+ * =============================================================================================
+ * Описание полей:
+ *  - sql_id            : уникальный идентификатор запроса (SQL id)
+ *  - plan_hash_value   : хэш значение плана выполнения
+ *  - cn                : номер дочернего запроса (child number)
+ *  - session_state     : состояние сессии
+ *  - event             : событие ожидания
+ *  - wait_class        : класс события ожидания
+ *  - wait_count        : количество событий ожидания
+ *  - time_waited_micro : среднее время, за которое выполняется данное событие
+ *  - stddev_micro      : стандартное отклонение от среднеме времени выполнения события
+ *  - avg_blocks        : среднее количество блоков, которое поднимается с диска за событие
+ *  - io_req            : количество запросов на чтение и запись отправляемых дисковой подсистеме
+ *  - db_time           : время работы субд, затраченное на выполнения запроса
+ *  - cpu_time          : время работы процессора, затраченное на выполнения запроса
+ *  - pct_used          : % соотношение времени выполнени конкретного эвента по отношению 
+                          к общему времени выполнения
+ * =============================================================================================
+ */
 with source as (
-    select '36h9grzu8qscn' sql_id, 16777216 sql_exec_id, 98976 bsnap_id, 98976 esnap_id from dual
+    select '36h9grzu8qscn' sql_id, 16777239 sql_exec_id, 98870 bsnap_id, 98870 esnap_id from dual
 )
-select 
---    trunc(sample_time) sample_time, 
+select
     ash.sql_id, 
-    ash.sql_plan_hash_value hv,
+    ash.sql_plan_hash_value plan_hash_value,
     ash.sql_child_number cn,
     ash.session_state, 
     ash.event, 
     ash.wait_class,
+	count(1) wait_count, 
     round(avg(ash.time_waited)) time_waited_micro,
     round(stddev(ash.time_waited)) stddev_micro,
     round(decode(ash.event, 'db file sequential read', avg(p3),
                             'db file parallel read',   avg(p2),
                             'direct path read temp',   avg(p3))) avg_blocks,
-	count(1) wait_count, 
-    sum(ash.delta_read_io_requests) io_req,
-    round(sum(ash.tm_delta_cpu_time)/1e6, 2) cpu_time,
+    sum(ash.delta_read_io_requests + ash.delta_write_io_requests) io_req,
     round(sum(ash.tm_delta_db_time)/1e6, 2) db_time,
-    round((ratio_to_report(count(1)) over (partition by /*trunc(sample_time),*/ ash.sql_id, ash.sql_plan_hash_value, ash.sql_child_number))*100, 2) as percent
+    round(sum(ash.tm_delta_cpu_time)/1e6, 2) cpu_time,
+    round((ratio_to_report(sum(ash.tm_delta_db_time)) over (partition by ash.sql_id, ash.sql_plan_hash_value, ash.sql_child_number)) * 100, 2) as pct_used
 from source s 
     join dba_hist_active_sess_history ash on ash.sql_id = s.sql_id 
                                          and ash.sql_exec_id = s.sql_exec_id
                                          and ash.snap_id between s.bsnap_id and s.esnap_id
-group by /*trunc(sample_time),*/
-    ash.sql_id, 
+group by ash.sql_id, 
     ash.sql_plan_hash_value, 
     ash.sql_child_number,
     ash.session_state, 
     ash.event, 
     ash.wait_class
-order by /*trunc(sample_time) desc,*/
-    ash.sql_child_number, 
+order by ash.sql_child_number, 
     wait_count desc;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -170,7 +215,7 @@ order by /*trunc(sample_time) desc,*/
  * =============================================================================================
  * Среднее время работы указанного запроса в каждом из снепшотов.
  * =============================================================================================
- * @param   sql_id   				Уникальный идентификатор запроса
+ * @param   sql_id   	                Уникальный идентификатор запроса
  * @param   sql_plan_hash_value		Хэш значение плана выполнения искомого запроса
  * =============================================================================================
  * Описание полей:
