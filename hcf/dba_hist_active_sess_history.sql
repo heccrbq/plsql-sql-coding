@@ -127,25 +127,41 @@ order by sql_exec_start desc nulls last;
 
 
 
--- Основные wait'ы с количеством вхождений.
+with source as (
+    select '36h9grzu8qscn' sql_id, 16777216 sql_exec_id, 98976 bsnap_id, 98976 esnap_id from dual
+)
 select 
-    trunc(sample_time) sample_time, sql_id, sql_plan_hash_value, sql_child_number,
-    session_state, event, wait_class,
-    round(avg(time_waited)) time_waited_micro,
-    round(decode(event, 'db file sequential read', avg(p3),
-                        'db file parallel read',   avg(p2),
-                        'direct path read temp',   avg(p3))) avg_blocks,
+--    trunc(sample_time) sample_time, 
+    ash.sql_id, 
+    ash.sql_plan_hash_value hv,
+    ash.sql_child_number cn,
+    ash.session_state, 
+    ash.event, 
+    ash.wait_class,
+    round(avg(ash.time_waited)) time_waited_micro,
+    round(stddev(ash.time_waited)) stddev_micro,
+    round(decode(ash.event, 'db file sequential read', avg(p3),
+                            'db file parallel read',   avg(p2),
+                            'direct path read temp',   avg(p3))) avg_blocks,
 	count(1) wait_count, 
-    sum(delta_read_io_requests) io_req,
-    round(sum(tm_delta_cpu_time)/1e6, 4) cpu_time_sec,
-    round(sum(tm_delta_db_time)/1e6, 4) db_time_sec,
-    round((ratio_to_report(count(1)) over (partition by trunc(sample_time), sql_id, sql_child_number))*100, 2) as percent
-from dba_hist_active_sess_history
-where sql_id = 'cur02kw4mpn5f' 
-	and sql_exec_id = 16777220 
-	and snap_id between 77465 and 77473
-group by session_state, event, wait_class, sql_id, sql_plan_hash_value, sql_child_number, trunc(sample_time)
-order by trunc(sample_time) desc, sql_child_number, wait_count desc;
+    sum(ash.delta_read_io_requests) io_req,
+    round(sum(ash.tm_delta_cpu_time)/1e6, 2) cpu_time,
+    round(sum(ash.tm_delta_db_time)/1e6, 2) db_time,
+    round((ratio_to_report(count(1)) over (partition by /*trunc(sample_time),*/ ash.sql_id, ash.sql_plan_hash_value, ash.sql_child_number))*100, 2) as percent
+from source s 
+    join dba_hist_active_sess_history ash on ash.sql_id = s.sql_id 
+                                         and ash.sql_exec_id = s.sql_exec_id
+                                         and ash.snap_id between s.bsnap_id and s.esnap_id
+group by /*trunc(sample_time),*/
+    ash.sql_id, 
+    ash.sql_plan_hash_value, 
+    ash.sql_child_number,
+    ash.session_state, 
+    ash.event, 
+    ash.wait_class
+order by /*trunc(sample_time) desc,*/
+    ash.sql_child_number, 
+    wait_count desc;
 
 
 
