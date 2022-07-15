@@ -2,9 +2,9 @@
  * =============================================================================================
  * Усредненные показатели работы запроса за определенный промежуток времени в разрезе дня
  * =============================================================================================
- * @param   sql_id              (VARCHAR2)   Уникальный идентификатор запроса
- * @param   begin_intreval_time (DATE)       Начало периода
- * @param   end_intreval_time   (DATE)       Окончание периода
+ * @param   sql_id (VARCHAR2)   Уникальный идентификатор запроса
+ * @param   btime  (DATE)       Начало периода
+ * @param   etime  (DATE)       Окончание периода
  * =============================================================================================
  * Описание полей:
  *  - sqlid : уникальный идентификатор запроса (SQL id)
@@ -26,7 +26,7 @@
  * =============================================================================================
  */
  with source as (
-    select '7qfg0j2h5z617' sql_id, trunc(sysdate) - 30 begin_interval_time, trunc(sysdate) end_interval_time from dual
+    select '7qfg0j2h5z617' sql_id, trunc(sysdate) - 30 btime, trunc(sysdate) etime from dual
  )
 select 
 --    s.sql_id AS sqlid,
@@ -52,7 +52,7 @@ from dba_hist_sqlstat s,
 where s.snap_id = w.snap_id
     and s.instance_number = w.instance_number
     and s.sql_id = src.sql_id
-    and w.begin_interval_time between src.begin_interval_time and src.end_interval_time
+    and w.begin_interval_time between src.btime and src.etime
 group by trunc(w.begin_interval_time),
     s.sql_id
     ,s.plan_hash_value
