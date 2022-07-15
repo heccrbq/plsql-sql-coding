@@ -60,6 +60,96 @@ order by tl desc;
 
 
 
+
+
+/**
+ * =============================================================================================
+ * Время выполнения запроса по версии HIST ASH в разрезе SQL_EXEC_ID
+ * =============================================================================================
+ * @param   sql_id (VARCHAR2)   Уникальный идентификатор запроса
+ * @param   btime  (DATE)       Начало периода
+ * @param   etime  (DATE)       Окончание периода
+ * =============================================================================================
+ * Описание полей:
+ *  - sql_exec_id     : идентификатор запуска запроса
+ *  - plan_hash_value : хэш значение плана выполнения
+ *  - snap_range      : период снепшотов, в котором был выполнен запрос
+ *  - sql_exec_start  : время начала выполнения конкретного запуска запроса
+ *  - sql_exec_stop   : время окончания выполнения конкретного запуска запроса
+ *  - sql_exec_diff   : разница в секундах между времени начала и окончания работы запуска 
+ *  - db              : время работы базы данных, затраченное на запрос (в секундах)
+ *  - cpu             : время работы процессора, затраченное на запрос (в секундах)
+ *  - read            : количество прочитанных данных (в мегабайтах)
+ *  - write           : количество записанных данных (в мегабайтах)
+ *  - ash_count       : общее количество строк выполнения в ASH в разрезе SQL_EXEC_ID.
+                        умножая на 10, можно получить примерное время работы в секундах
+ *  - parse           : количество вхождений в ASH, относительно парса запроса
+ *  - hard_parse      : количество вхождений в ASH, относительно полного парса запроса
+ *  - sql             : количество вхождений в ASH, относительно выполнения запроса
+ *  - plsql           : количество вхождений в ASH, относительно выполнения PL/SQL кода
+ *  - java            : количество вхождений в ASH, относительно выполнения Java кода
+ *  - cursor_close    : количество вхождений в ASH, относительно выполнения закрытия курсора
+ * =============================================================================================
+ */
+with source as (
+    select '1yw4fsfy5mfn9' sql_id, trunc(sysdate) - 30 btime, sysdate etime from dual
+ )
+select 
+    ash.sql_exec_id, 
+    ash.sql_plan_hash_value plan_hash_value,
+    min(w.snap_id) || ' - ' || max(w.snap_id) snap_range,
+    ash.sql_exec_start, 
+    cast(max(ash.sample_time) as date) sql_exec_stop, 
+    round((cast(max(ash.sample_time) as date) - ash.sql_exec_start) * 86400) sql_exec_diff,
+    round(sum(ash.tm_delta_db_time)/1e6, 2) db, 
+    round(sum(ash.tm_delta_cpu_time)/1e6, 2) cpu,  
+    round(sum(ash.delta_read_io_bytes)/1024/1024) read,
+    round(sum(ash.delta_write_io_bytes)/1024/1024) write,
+    --
+    count(1) ash_count,
+    count(nullif(ash.in_parse, 'N')) parse,
+    count(nullif(ash.in_hard_parse, 'N')) hard_parse,
+    count(nullif(ash.in_sql_execution, 'N')) sql,
+    count(nullif(ash.in_plsql_execution, 'N')) plsql,
+    count(nullif(ash.in_java_execution, 'N')) java,
+    count(nullif(ash.in_cursor_close, 'N')) cursor_close
+from source s
+    join dba_hist_active_sess_history ash on ash.sql_id = s.sql_id
+    join dba_hist_snapshot w on w.instance_number = ash.instance_number
+                            and w.dbid = ash.dbid
+                            and w.snap_id = ash.snap_id
+                            and w.begin_interval_time between s.btime and s.etime
+group by ash.sql_exec_id,
+    ash.sql_exec_start,
+    ash.sql_plan_hash_value
+order by sql_exec_start desc nulls last;
+
+
+
+
+-- Основные wait'ы с количеством вхождений.
+select 
+    trunc(sample_time) sample_time, sql_id, sql_plan_hash_value, sql_child_number,
+    session_state, event, wait_class,
+    round(avg(time_waited)) time_waited_micro,
+    round(decode(event, 'db file sequential read', avg(p3),
+                        'db file parallel read',   avg(p2),
+                        'direct path read temp',   avg(p3))) avg_blocks,
+	count(1) wait_count, 
+    sum(delta_read_io_requests) io_req,
+    round(sum(tm_delta_cpu_time)/1e6, 4) cpu_time_sec,
+    round(sum(tm_delta_db_time)/1e6, 4) db_time_sec,
+    round((ratio_to_report(count(1)) over (partition by trunc(sample_time), sql_id, sql_child_number))*100, 2) as percent
+from dba_hist_active_sess_history
+where sql_id = 'cur02kw4mpn5f' 
+	and sql_exec_id = 16777220 
+	and snap_id between 77465 and 77473
+group by session_state, event, wait_class, sql_id, sql_plan_hash_value, sql_child_number, trunc(sample_time)
+order by trunc(sample_time) desc, sql_child_number, wait_count desc;
+
+
+
+
 /**
  * =============================================================================================
  * Среднее время работы указанного запроса в каждом из снепшотов.
@@ -92,27 +182,6 @@ where a.sql_id = '3srshtyjrcghw'/*:sql_id*/
     and a.instance_number = b.instance_number
 order by snap_id desc,
     a.instance_number;
-
-
--- Основные wait'ы с количеством вхождений.
-select 
-    trunc(sample_time) sample_time, sql_id, sql_plan_hash_value, sql_child_number,
-    session_state, event, wait_class,
-    round(avg(time_waited)) time_waited_micro,
-    round(decode(event, 'db file sequential read', avg(p3),
-                        'db file parallel read',   avg(p2),
-                        'direct path read temp',   avg(p3))) avg_blocks,
-	count(1) wait_count, 
-    sum(delta_read_io_requests) io_req,
-    round(sum(tm_delta_cpu_time)/1e6, 4) cpu_time_sec,
-    round(sum(tm_delta_db_time)/1e6, 4) db_time_sec,
-    round((ratio_to_report(count(1)) over (partition by trunc(sample_time), sql_id, sql_child_number))*100, 2) as percent
-from dba_hist_active_sess_history
-where sql_id = 'cur02kw4mpn5f' 
-	and sql_exec_id = 16777220 
-	and snap_id between 77465 and 77473
-group by session_state, event, wait_class, sql_id, sql_plan_hash_value, sql_child_number, trunc(sample_time)
-order by trunc(sample_time) desc, sql_child_number, wait_count desc;
 
 
 /**
@@ -360,71 +429,6 @@ from dba_hist_sqltext st
     join dba_hist_snapshot s on s.snap_id = ss.snap_id and s.instance_number = ss.instance_number 
 where upper(st.sql_text) like '%WITH%TMP_REMAIN%'
 group by st.sql_id;
-
-
-
-
-
-/**
- * =============================================================================================
- * Время выполнения запроса по версии HIST ASH в разрезе SQL_EXEC_ID
- * =============================================================================================
- * @param   sql_id (VARCHAR2)   Уникальный идентификатор запроса
- * @param   btime  (DATE)       Начало периода
- * @param   etime  (DATE)       Окончание периода
- * =============================================================================================
- * Описание полей:
- *  - sql_exec_id     : идентификатор запуска запроса
- *  - plan_hash_value : хэш значение плана выполнения
- *  - snap_range      : период снепшотов, в котором был выполнен запрос
- *  - sql_exec_start  : время начала выполнения конкретного запуска запроса
- *  - sql_exec_stop   : время окончания выполнения конкретного запуска запроса
- *  - sql_exec_diff   : разница в секундах между времени начала и окончания работы запуска 
- *  - db              : время работы базы данных, затраченное на запрос (в секундах)
- *  - cpu             : время работы процессора, затраченное на запрос (в секундах)
- *  - read            : количество прочитанных данных (в мегабайтах)
- *  - write           : количество записанных данных (в мегабайтах)
- *  - ash_count       : общее количество строк выполнения в ASH в разрезе SQL_EXEC_ID.
-                        умножая на 10, можно получить примерное время работы в секундах
- *  - parse           : количество вхождений в ASH, относительно парса запроса
- *  - hard_parse      : количество вхождений в ASH, относительно полного парса запроса
- *  - sql             : количество вхождений в ASH, относительно выполнения запроса
- *  - plsql           : количество вхождений в ASH, относительно выполнения PL/SQL кода
- *  - java            : количество вхождений в ASH, относительно выполнения Java кода
- *  - cursor_close    : количество вхождений в ASH, относительно выполнения закрытия курсора
- * =============================================================================================
- */
-with source as (
-    select 'at8qkrwdx1xvn' sql_id, trunc(sysdate) - 30 btime, sysdate etime from dual
- )
-select 
-    ash.sql_exec_id, 
-    ash.sql_plan_hash_value plan_hash_value,
-    min(w.snap_id) || ' - ' || max(w.snap_id) snap_range,
-    min(ash.sql_exec_start) sql_exec_start, 
-    cast(max(ash.sample_time) as date) sql_exec_stop, 
-    round((cast(max(ash.sample_time) as date) - min(ash.sql_exec_start)) * 86400) sql_exec_diff,
-    round(sum(ash.tm_delta_db_time)/1e6, 2) db, 
-    round(sum(ash.tm_delta_cpu_time)/1e6, 2) cpu,  
-    round(sum(ash.delta_read_io_bytes) / 1024 / 1024) read,
-    round(sum(ash.delta_write_io_bytes) / 1024 / 1024) write,
-    --
-    count(1) ash_count,
-    count(nullif(ash.in_parse, 'N')) parse,
-    count(nullif(ash.in_hard_parse, 'N')) hard_parse,
-    count(nullif(ash.in_sql_execution, 'N')) sql,
-    count(nullif(ash.in_plsql_execution, 'N')) plsql,
-    count(nullif(ash.in_java_execution, 'N')) java,
-    count(nullif(ash.in_cursor_close, 'N')) cursor_close
-from source s
-    join dba_hist_active_sess_history ash on ash.sql_id = s.sql_id
-    join dba_hist_snapshot w on w.instance_number = ash.instance_number
-                            and w.dbid = ash.dbid
-                            and w.snap_id = ash.snap_id
-                            and w.begin_interval_time between s.btime and s.etime
-group by ash.sql_exec_id, 
-    ash.sql_plan_hash_value
-order by sql_exec_start desc nulls last;
 
 
 
