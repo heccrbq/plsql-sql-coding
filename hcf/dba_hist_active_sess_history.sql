@@ -364,25 +364,65 @@ group by st.sql_id;
 
 
 
--- неверно определяется execs_ash и все что тянется из sqlstat дублируется
-select --+ parallel(4)
-    ash.sql_id, 
-    ash.sql_plan_hash_value, 
-    ash.sql_exec_id,
-    ash.sql_exec_start,
-    count(distinct ash.sql_exec_id)over() execs_ash,
-    round(sum(ash.usecs_per_row) / 1e6, 2) AS avg_elapsed_time_ash,
-    sum(ss.executions_delta) AS execs_sqlstat,
-    round(sum(ss.elapsed_time_delta) / greatest(sum(ss.executions_delta), 1) / 1e6, 2) AS avg_elapsed_time_sqlstat,
-    min(ash.snap_id) || '-' || max(ash.snap_id) snap_id
-from dba_hist_active_sess_history  ash
-    join dba_hist_snapshot s on s.snap_id = ash.snap_id and s.instance_number = ash.instance_number 
-    join dba_hist_sqlstat ss on ss.snap_id = ash.snap_id and ss.instance_number = ash.instance_number and ss.sql_id = ash.sql_id and ss.plan_hash_value = ash.sql_plan_hash_value
-where ash.sql_id = 'bfctjzphmxwqy' 
-    and s.begin_interval_time >= trunc(sysdate) - 7
-    and s.begin_interval_time <= trunc(sysdate) + 1
-group by ash.sql_id, ash.sql_plan_hash_value, ash.sql_exec_id, ash.sql_exec_start
-order by sql_exec_start;
+
+/**
+ * =============================================================================================
+ * Время выполнения запроса по версии HIST ASH в разреже SQL_EXEC_ID
+ * =============================================================================================
+ * @param   sql_id (VARCHAR2)   Уникальный идентификатор запроса
+ * @param   btime  (DATE)       Начало периода
+ * @param   etime  (DATE)       Окончание периода
+ * =============================================================================================
+ * Описание полей:
+ *  - sql_exec_id    : идентификатор запуска запроса
+ *  - snap_range     : период снепшотов, в котором был выолнен запрос
+ *  - sql_exec_start : время начала выполнения конкретного запуска запроса
+ *  - sql_exec_stop  : время окончания выполнения конкретного запуска запроса
+ *  - sql_exec_diff  : разница в секунлах между времени начала и окончания работы запуска 
+ *  - db             : время работы базы данных, затраченное на запрос (в секундах)
+ *  - cpu            : время работы процессора, затраченное на запрос (в секундах)
+ *  - read           : количество прочитанных данных (в мегабайтах)
+ *  - write          : количество записанных данных (в мегабайтах)
+ *  - ash_count      : общее количество строк выполнения в ASH в разрезе SQL_EXEC_ID.
+                       умножая на 10, можно получить примерное время работы в секундах
+ *  - parse          : количество вхождений в ASH, относительно парса запроса
+ *  - hard_parse     : количество вхождений в ASH, относительно полного парса запроса
+ *  - sql            : количество вхождений в ASH, относительно выполнения запроса
+ *  - plsql          : количество вхождений в ASH, относительно выполнения PL/SQL кода
+ *  - java           : количество вхождений в ASH, относительно выполнения Java кода
+ *  - cursor_close   : количество вхождений в ASH, относительно выполнения закрытия курсора
+ * =============================================================================================
+ */
+with source as (
+    select 'at8qkrwdx1xvn' sql_id, trunc(sysdate) - 30 btime, trunc(sysdate) etime from dual
+ )
+select 
+    ash.sql_exec_id, 
+    min(w.snap_id) || ' - ' || max(w.snap_id) snap_range,
+    ash.sql_exec_start, 
+    cast(max(ash.sample_time) as date) sql_exec_stop, 
+    round((cast(max(ash.sample_time) as date) - ash.sql_exec_start) * 86400) sql_exec_diff,
+    round(sum(ash.tm_delta_db_time)/1e6, 2) db, 
+    round(sum(ash.tm_delta_cpu_time)/1e6, 2) cpu,  
+    round(sum(ash.delta_read_io_bytes)/1024/1024) read,
+    round(sum(ash.delta_write_io_bytes)/1024/1024) write,
+    --
+    count(1) ash_count,
+    count(nullif(ash.in_parse, 'N')) parse,
+    count(nullif(ash.in_hard_parse, 'N')) hard_parse,
+    count(nullif(ash.in_sql_execution, 'N')) sql,
+    count(nullif(ash.in_plsql_execution, 'Y')) plsql,
+    count(nullif(ash.in_java_execution,'Y')) java,
+    count(nullif(ash.in_cursor_close,'Y')) cursor_close
+from source s
+    join dba_hist_active_sess_history ash on ash.sql_id = s.sql_id
+    join dba_hist_snapshot w on w.instance_number = ash.instance_number
+                            and w.dbid = ash.dbid
+                            and w.snap_id = ash.snap_id
+                            and w.begin_interval_time between s.btime and s.etime
+group by ash.sql_exec_id, 
+    ash.sql_exec_start
+order by sql_exec_start desc nulls last;
 
 
 
