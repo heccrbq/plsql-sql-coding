@@ -2,7 +2,9 @@
  * =============================================================================================
  * Усредненные показатели работы запроса за определенный промежуток времени
  * =============================================================================================
- * @param   sql_id		Уникальный идентификатор запроса
+ * @param   sql_id              (VARCHAR2)   Уникальный идентификатор запроса
+ * @param   begin_intreval_time (DATE)       Начало периода
+ * @param   end_intreval_time   (DATE)       Окончание периода
  * =============================================================================================
  * Описание полей:
  *  - sqlid : уникальный идентификатор запроса (SQL id)
@@ -23,8 +25,11 @@
  *  - px    : Среднее количество параллелей, используемых запросом (Avg PX Servers)
  * =============================================================================================
  */
+ with source as (
+    select '7qfg0j2h5z617' sql_id, trunc(sysdate) - 30 begin_interval_time, trunc(sysdate) end_interval_time from dual
+ )
 select 
---    s.sql_id AS sqlid,	
+--    s.sql_id AS sqlid,
     s.plan_hash_value hv,
 --    (select trim(dbms_lob.substr(t.sql_text, 4000)) from dba_hist_sqltext t where s.sql_id = t.sql_id) AS text,
     trunc(w.begin_interval_time) AS tl,
@@ -42,16 +47,17 @@ select
     round(sum(s.parse_calls_delta)      / greatest(sum(s.executions_delta), 1)) AS pc,
     round(sum(s.px_servers_execs_delta) / greatest(sum(s.executions_delta), 1)) AS px
 from dba_hist_sqlstat s,
-    dba_hist_snapshot w
+    dba_hist_snapshot w,
+    source src
 where s.snap_id = w.snap_id
     and s.instance_number = w.instance_number
-    and s.sql_id = '0axvzjh828q7y' /*:sql_id*/
-    and w.begin_interval_time >= trunc(sysdate) - 30
-    and w.begin_interval_time <= trunc(sysdate) + 1
+    and s.sql_id = src.sql_id
+    and w.begin_interval_time between src.begin_interval_time and src.end_interval_time
 group by trunc(w.begin_interval_time),
     s.sql_id
     ,s.plan_hash_value
 order by tl desc;
+
 
 
 /**
