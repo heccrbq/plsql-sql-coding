@@ -1,6 +1,6 @@
 /**
  * =============================================================================================
- * Усредненные показатели работы запроса за определенный промежуток времени
+ * Усредненные показатели работы запроса за определенный промежуток времени в разрезе дня
  * =============================================================================================
  * @param   sql_id              (VARCHAR2)   Уникальный идентификатор запроса
  * @param   begin_intreval_time (DATE)       Начало периода
@@ -14,13 +14,13 @@
  *  - ela   : Среднее время выполнения запроса в секундах (Avg Elapsed Time (s) per Exec) 
  *  - cpu   : Среднее время использование процессорных ресурсов (Avg CPU Time (s) per Exec)
  *  - io    : Среднее время, затраченное на операции ввода-вывода (Avg I/O Time (s) per Exec)
- *  - disk  : Среднее количество блоков, вычитанных с диска (Avg Physical Reads per Exec)
- *  - lio   : Среднее количество блоков, вычитанных из памяти в режимах cr и cu (Avg Logical Reads per Exec)
- *  - r     : Среднее количество строк, возвращенное запросом (Avg Rows Processed per Exec)
  *  - cc    : Среднее время, затраченное на события конкуренции в секундах (Avg Concurrency Wait Time)
  *  - app   : Среднее время, затраченное на ожидания приложением в секундах (Avg Application Wait Time)
  *  - plsql : Среднее время выполнения логики PL/SQL движком в секундах (Avg PL/SQL Execution Time)
  *  - java  : Среднее время выполнения логики JVM в секундах (Avg Java Execution Time)
+ *  - disk  : Среднее количество блоков, вычитанных с диска (Avg Physical Reads per Exec)
+ *  - lio   : Среднее количество блоков, вычитанных из памяти в режимах cr и cu (Avg Logical Reads per Exec)
+ *  - r     : Среднее количество строк, возвращенное запросом (Avg Rows Processed per Exec)
  *  - pc    : Среднее количество parse calls (Avg Parse Calls)
  *  - px    : Среднее количество параллелей, используемых запросом (Avg PX Servers)
  * =============================================================================================
@@ -37,13 +37,13 @@ select
     round(sum(s.elapsed_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS ela,
     round(sum(s.cpu_time_delta)         / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS cpu,
     round(sum(s.iowait_delta)           / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS io,
-    round(sum(s.disk_reads_delta)       / greatest(sum(s.executions_delta), 1)) AS disk,
-    round(sum(s.buffer_gets_delta)      / greatest(sum(s.executions_delta), 1)) AS lio,
-    round(sum(s.rows_processed_delta)   / greatest(sum(s.executions_delta), 1)) AS r,
     round(sum(s.ccwait_delta)           / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS cc,
     round(sum(s.apwait_delta)           / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS app,
     round(sum(s.plsexec_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS plsql,
     round(sum(s.javexec_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS java,
+    round(sum(s.disk_reads_delta)       / greatest(sum(s.executions_delta), 1)) AS disk,
+    round(sum(s.buffer_gets_delta)      / greatest(sum(s.executions_delta), 1)) AS lio,
+    round(sum(s.rows_processed_delta)   / greatest(sum(s.executions_delta), 1)) AS r,
     round(sum(s.parse_calls_delta)      / greatest(sum(s.executions_delta), 1)) AS pc,
     round(sum(s.px_servers_execs_delta) / greatest(sum(s.executions_delta), 1)) AS px
 from dba_hist_sqlstat s,
