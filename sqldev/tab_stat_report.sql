@@ -1,4 +1,3 @@
-
 col table_name for a20
 col last_analyzed for a22
 col pct_sample for a11
@@ -7,12 +6,12 @@ col user_stats heading USR_STAT
 select table_name, last_analyzed, num_rows,blocks, sample_size, round(sample_size/num_rows*100) pct_sample, global_stats, user_stats 
 from dba_tab_statistics where table_name in ('TREFERENCEENTRY' , 'TDOCUMENT', 'TENTRY');
 
-
+-- find information by last_analyzed
 col operation for a30
 col target for a30
 col status for a11
 with source as (
-    select 'A4M' table_owner, 'TREFERENCEENTRY' table_name from dual
+    select 'A4M' table_owner, 'TDOCUMENT' table_name from dual
 ),
 opt as (
     select 
@@ -47,9 +46,44 @@ select * from (
     from opt,
         dba_optstat_operation_tasks oot
     where opt.opid = oot.opid
-    order by priority
+    order by oot.priority
 );
-     
+
+
+-- find information in real time
+with source as (
+    select 'A4M' table_owner, 'TENTRY' table_name from dual
+)
+select 
+    st.id opid,
+    st.operation,
+    st.target,
+    st.start_time,
+    st.end_time,
+    st.status,
+    st.session_id
+from source s,
+    dba_optstat_operations st
+where s.table_owner || '.' || table_name = st.target
+union all
+select * from (
+    select
+        oot.opid,
+        ' - ' || lower(oot.target_type) operation,
+        oot.target,
+        oot.start_time,
+        oot.end_time,
+        oot.status,
+        null
+    from source s,
+        dba_optstat_operations st,
+        dba_optstat_operation_tasks oot
+    where s.table_owner || '.' || table_name = st.target
+        and oot.opid = st.id
+    order by oot.priority
+)
+order by opid, start_time;
+
 
 
 col name for a18 heading PARAMETER_NAME
@@ -77,4 +111,3 @@ from dba_optstat_operation_tasks,
                                                                  xstats varchar2(30) path 'xstats') xt 
 where opid = (select opid from source)
     and notes is not null;
-    
