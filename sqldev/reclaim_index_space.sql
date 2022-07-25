@@ -18,7 +18,7 @@
  
  -- #1. estimated used index size based on index & table statistics
  with source as (
-    select 'A4M' index_owner, sys.odcivarchar2list('TMP$$_ICONTRACTRB_ISSCLIENT') index_list from dual
+    select 'A4M' index_owner, sys.odcivarchar2list('PK_RETADJUSTTRAN') index_list from dual
 )
 select 
     i.owner index_owner, 
