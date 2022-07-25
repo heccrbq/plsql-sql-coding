@@ -151,7 +151,7 @@ analyze index A4M.PK_RETADJUSTTRAN validate structure; -- 16gb for 14801 sec usi
 select * from index_stats;
 
 /*
-  Total leaf rows : 70 634 681 (100.00%)
+       Total rows : 70 634 681 (100.00%)
       Branch rows :  1 051 641 (  1.49%)  |  _ind_statistics.num_rows : 4 159 865 (sample 100%)
  Actual leaf rows :  3 108 224 (  4.40%)  |      branch + actual leaf : 4 159 865
 Deleted leaf rows : 66 474 816 ( 94.11%)
