@@ -1,10 +1,23 @@
-col table_name for a20
+col group_name for a18
+col object_name for a26
 col last_analyzed for a22
 col pct_sample for a11
 col global_stats heading GL_STAT
 col user_stats heading USR_STAT
-select table_name, last_analyzed, num_rows,blocks, sample_size, round(sample_size/num_rows*100) pct_sample, global_stats, user_stats 
-from dba_tab_statistics where table_name in ('TREFERENCEENTRY' , 'TDOCUMENT', 'TENTRY');
+with source as (
+    select sys.odcivarchar2list('TREFERENCEENTRY' , 'TDOCUMENT', 'TENTRY') table_list from dual
+)
+
+select 
+    table_name group_name, table_name object_name, object_type, last_analyzed, num_rows, blocks, sample_size, to_char(round(sample_size/num_rows * 100, 2), '999D99') || '%' pct_sample, global_stats, user_stats 
+from dba_tab_statistics where table_name in (select /*+dynamic_sampling(3)*/ column_value from source s, table(s.table_list))
+union all
+select 
+    table_name, index_name object_name, object_type, last_analyzed, num_rows, leaf_blocks, sample_size, to_char(round(sample_size/num_rows * 100, 2), '990D99') || '%' pct_sample, global_stats, user_stats 
+from dba_ind_statistics where table_name in (select /*+dynamic_sampling(3)*/ column_value from source s, table(s.table_list))
+order by group_name, object_type desc, object_name;
+
+
 
 -- find information by last_analyzed
 col operation for a30
