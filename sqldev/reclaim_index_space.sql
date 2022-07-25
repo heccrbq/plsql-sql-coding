@@ -18,7 +18,7 @@
  
  -- #1. estimated used index size based on index & table statistics
  with source as (
-    select 'A4M' index_owner, 'PK_RETADJUSTTRAN' index_name from dual
+    select 'A4M' index_owner, sys.odcivarchar2list('TMP$$_ICONTRACTRB_ISSCLIENT') index_list from dual
 )
 select 
     i.owner index_owner, 
@@ -50,7 +50,8 @@ from dba_indexes i
             join dba_ind_statistics ins on ins.owner = ic.index_owner and ins.index_name = ic.index_name
         where t.table_name = i.table_name and t.owner = i.table_owner
     ) ca
-where (i.owner, i.index_name) in (select * from source);
+where (i.owner, i.index_name) in (select /*+dynamic_sampling(3)*/ s.index_owner, column_value from source s, table(s.index_list) t)
+order by pct_used;
 
 
 -- #2. CREATE_INDEX_COST
