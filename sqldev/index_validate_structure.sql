@@ -27,10 +27,15 @@ commit;
 analyze index IDX_DBYKOV_TEST_OBJECT_ID validate structure;
 select * from index_stats;
 
+update dbykov_test set object_id = (select max(object_id)+1 from dbykov_test) where object_id = (select min(object_id) from dbykov_test);
+commit;
+
+analyze index IDX_DBYKOV_TEST_OBJECT_ID validate structure;
+select * from index_stats;
+
 -- there is the difference between the distinct_keys column in dba_ind_statistics and index_stats
 select * From dba_ind_statistics where index_name = 'IDX_DBYKOV_TEST_OBJECT_ID';
 exec dbms_stats.gather_index_stats('A4M','IDX_DBYKOV_TEST_OBJECT_ID');
 
-
-select * From all_tab_modifications where table_name = 'TDOCUMENT';
+select * From all_tab_modifications where table_name = 'DBYKOV_TEST';
 
