@@ -8,7 +8,7 @@ select count(1) from dbykov_test; -- 491984
 
 analyze index IDX_DBYKOV_TEST_OBJECT_ID validate structure;
 select * from index_stats;
--- select (lf_rows_len + lf_blk_len + br_rows_len + del_lf_rows_len), used_space, btree_space, pct_used from index_stats;
+-- select (lf_rows_len + lf_blk_len + br_rows_len + del_lf_rows_len), used_space, btree_space, pct_used, HEIGHT + (ROWS_PER_KEY + 1)/2 calculated_blks_gets_per_access from index_stats;
 
 truncate table dbykov_temp;
 insert into dbykov_temp select * from dbykov_test where object_id <= 100;
@@ -27,6 +27,7 @@ commit;
 analyze index IDX_DBYKOV_TEST_OBJECT_ID validate structure;
 select * from index_stats;
 
+-- there is the difference between the distinct_keys column in dba_ind_statistics and index_stats
 select * From dba_ind_statistics where index_name = 'IDX_DBYKOV_TEST_OBJECT_ID';
 exec dbms_stats.gather_index_stats('A4M','IDX_DBYKOV_TEST_OBJECT_ID');
 
