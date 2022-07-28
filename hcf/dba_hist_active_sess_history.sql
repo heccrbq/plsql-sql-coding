@@ -127,6 +127,7 @@ order by sql_exec_start desc nulls last;
 
 
 
+
 /**
  * =============================================================================================
  * Сбор информации о событиях ожидания по конкретному запуску запроса
@@ -191,7 +192,32 @@ order by ash.sql_child_number,
 
 
 
-
+/**
+ * =============================================================================================
+ * Запрос генерации плана выполнения, полученнего из HIST'а
+ * =============================================================================================
+ * @param   start_snap_id (NUMBER)   Стартовый снепшот генерации отчета
+ * @param   end_snap_id   (NUMBER)   Конечный снепшот генерации отчета
+ * =============================================================================================
+ * Описание полей:
+ *  - file#  : имя сгенерированного отчета
+ *  - output : содержание отчета
+ */
+with source as (
+    select '1vfqf2sv20sns' sql_id, 4231107709 plan_hash_value, 'basic +outline +note' format from dual
+)
+select
+    'EXEC_PLAN_AWR_' || lower(d.name) || '_' || s.sql_id || '_' || s.plan_hash_value || '.txt' file#,
+    dbms_xmlgen.convert(xmlagg(xmlelement(output, t.plan_table_output || chr(10)) order by rownum).extract('//text()').getclobval(),1) output
+from source s,
+    v$database d,
+    table(dbms_xplan.display_awr(sql_id          => s.sql_id,
+                                 plan_hash_value => s.plan_hash_value,
+                                 db_id           => d.dbid,
+                                 format          => s.format)) t
+group by d.name,
+    s.sql_id,
+    s.plan_hash_value;
 
 
 
