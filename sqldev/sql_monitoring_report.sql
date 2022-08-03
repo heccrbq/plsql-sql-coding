@@ -13,7 +13,7 @@ with source as (
 )
 select 
     'SQLMONITOR_' || sql_id || '.html' file#,
-    dbms_sqltune.report_sql_monitor(sql_id =>       'sql_id', 
+    dbms_sqltune.report_sql_monitor(sql_id =>       sql_id, 
                                     report_level => 'all', 
                                     type =>         'html') output
 from source;
