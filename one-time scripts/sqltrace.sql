@@ -6,17 +6,18 @@
 
 -- проверка создался ли trace файл
 select 
+    file#,
     adr_home,
     trace_filename
-from v$diag_trace_file 
-where trace_filename = 
-    (select instance || '_ora_' ||
-        ltrim(to_char(a.spid,'fm9999999999')) || '.trc' filename
+from (
+    select instance || '_ora_' ||
+        ltrim(to_char(a.spid,'fm9999999999')) || '.trc' file#
     from v$process a, v$session b, v$parameter c, v$thread c
     where a.addr = b.paddr
         and b.audsid = userenv('sessionid')
 --		and b.sid = 1053
-        and c.name = 'user_dump_dest');
+        and c.name = 'user_dump_dest') t
+    left join v$diag_trace_file d on d.trace_filename = t.file#;
 
 /*=============================================================================================*/
 
