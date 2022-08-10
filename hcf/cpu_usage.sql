@@ -36,32 +36,38 @@ select * from v$sys_time_model where stat_name in ( 'DB CPU',
 
 -- использование CPU по сессиям по долгоиграющим запросам
 select
-   s.username,
-   t.sid,
-   s.serial#,
-   s.sql_id,
-   s.event,
-   sum(value/100) as "cpu usage (seconds)",
-   round((ratio_to_report(sum(value)) over ())*100, 2) as "pct, %",
-   io.block_gets,
-   io.consistent_gets,
-   io.physical_reads,
-   io.block_changes,
-   io.consistent_changes
-from    v$session s
-   inner join v$sesstat t on t.sid = s.sid
-   inner join v$statname n on n.statistic# = t.statistic#
-   inner join v$sess_io io on io.sid = s.sid
+    s.type,
+    s.username,
+    t.sid,
+    s.serial#,
+    s.sql_id,
+    s.event,
+    sum(t.value/100) as "CPU USAGE (seconds)",
+    round((ratio_to_report(sum(t.value)) over ())*100, 2) as "pct, %",
+    io.block_gets,
+    io.consistent_gets,
+    io.physical_reads,
+    io.block_changes,
+    io.consistent_changes
+from v$session s
+   join v$sesstat t on t.sid = s.sid
+   join v$statname n on n.statistic# = t.statistic#
+   join v$sess_io io on io.sid = s.sid
 where s.status = 'ACTIVE'
    and n.name like '%CPU used by this session%'
    and s.username is not null
-group by username,t.sid,s.serial#, io.block_gets,
-   io.consistent_gets,
-   io.physical_reads,
-   io.block_changes,
-   io.consistent_changes,
-   s.sql_id, s.event
-order by 6 desc;
+group by s.type, 
+    s.username,
+    t.sid,
+    s.serial#,    
+    s.sql_id,
+    s.event,
+    io.block_gets,
+    io.consistent_gets,
+    io.physical_reads,
+    io.block_changes,
+    io.consistent_changes
+order by 7 desc;
 
 
 -- TopN query by cpu usage
