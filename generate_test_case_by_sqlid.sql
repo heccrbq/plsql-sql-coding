@@ -34,7 +34,7 @@ from plan_table pt,
     xmltable('/other_xml/outline_data/hint/text()' passing xmltype(pt.other_xml) columns hint varchar2(255) path '.')xt 
 where pt.plan_id = (select max(plan_id) from plan_table where statement_id = 'dbykov') 
     and pt.id = 1 /*other_xml is not null*/;]') || crlf
-from dual
+from sqltext
 union all
 select
     'set timing on' || crlf  ||
@@ -89,3 +89,7 @@ select
     '                                    cursor_child_no => c.sql_child_number,' || crlf ||
     '                                    format          => ''allstats last''));' || crlf
 from sqltext;
+
+select sql_id, address, hash_value ,
+    'exec SYS.DBMS_SHARED_POOL.PURGE(''' || address || ',' || hash_value || ''', ''C'');' x
+from v$sqlarea where sql_id = '1sxxfjt9jpgjw';
