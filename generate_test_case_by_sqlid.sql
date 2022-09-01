@@ -3,7 +3,7 @@ with source as (
 ),
 sqltext as (
     select 
-        sql_id, sql_text, chr(13) || chr(10) crlf, 'query' || to_char(sysdate, 'yyyyddmmhh24miss') label
+        sql_id, sql_text, chr(13) || chr(10) crlf, 'query' || to_char(sysdate, 'yyyymmddhh24miss') label
     from dba_hist_sqltext join source using (sql_id)
 ),
 sqlbind as (
@@ -19,11 +19,22 @@ sqlbind as (
     fetch first row with ties
 )
 
-select
-    'explain plan for' || crlf ||
-    sql_text || ';' || crlf ||
-    'select * from table(dbms_xplan.display);' || crlf || crlf output
+select    
+    'begin' || crlf ||
+    q'[    execute immediate q'`explain plan set statement_id = 'dbykov' for ]' || crlf ||
+    '        ' || sql_text || q'[`';]' || crlf ||
+    'end;' || crlf || 
+    '/' || crlf ||
+    'select * from table(dbms_xplan.display);' || crlf output
 from sqltext
+union all
+select
+    to_clob(q'[select hint
+from plan_table pt, 
+    xmltable('/other_xml/outline_data/hint/text()' passing xmltype(pt.other_xml) columns hint varchar2(255) path '.')xt 
+where pt.plan_id = (select max(plan_id) from plan_table where statement_id = 'dbykov') 
+    and pt.id = 1 /*other_xml is not null*/;]') || crlf
+from dual
 union all
 select
     'set timing on' || crlf  ||
