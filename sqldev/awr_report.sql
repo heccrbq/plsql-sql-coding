@@ -38,7 +38,7 @@ group by d.name, d.dbid, d.inst_id, s.start_snap_id, s.end_snap_id;
  *  - output : содержание отчета
  */
 with source as (
-    select timestamp'2022-07-04 04:47:00' start_time, timestamp'2022-07-04 05:37:00' end_time from dual
+    select timestamp'2022-09-24 04:47:00' btime, timestamp'2022-09-24 05:37:00' etime from dual
 ),
 awr as (
     select 
@@ -48,8 +48,8 @@ awr as (
         select min(snap_id) start_snap_id, max(snap_id) end_snap_id
         from dba_hist_snapshot sn, source s
         where sn.dbid = d.dbid and sn.instance_number = d.inst_id 
-            and (s.start_time between sn.begin_interval_time and sn.end_interval_time 
-                or s.end_time between sn.begin_interval_time and sn.end_interval_time)) lt
+            and (s.btime between sn.begin_interval_time and sn.end_interval_time 
+                or s.etime between sn.begin_interval_time and sn.end_interval_time)) lt
 )
 --select * From awr;
 select
