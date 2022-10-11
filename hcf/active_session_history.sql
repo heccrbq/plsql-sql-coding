@@ -443,7 +443,7 @@ from gv$sql_plan sp
     on ash.sql_id = sp.sql_id
         and ash.sql_plan_hash_value = sp.plan_hash_value
         and ash.sql_plan_line_id = sp.id
-where (sp.sql_id, sp.plan_hash_value) in (select sql_id, plan_hash_value from source)
+where (sp.sql_id, sp.plan_hash_value, child_number) in (select sql_id, plan_hash_value, child_number from source)
 union all
 select
     ash.sql_plan_line_id id,
