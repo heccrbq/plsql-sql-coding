@@ -3,6 +3,7 @@
 -- ALTER SESSION SET SQL_TRACE=TRUE;
 -- DBMS_SESSION.SET_SQL_TRACE (TRUE);
 
+alter session set tracefile_identifier = "trace2356";
 
 -- проверка создался ли trace файл
 select 
