@@ -11,7 +11,7 @@ select
     trace_filename
 from (
     select instance || '_ora_' ||
-        ltrim(to_char(a.spid,'fm9999999999')) || '.trc' file#
+        ltrim(to_char(a.spid,'fm9999999999')) || '_' || a.traceid || '.trc' file#
     from v$process a, v$session b, v$parameter c, v$thread c
     where a.addr = b.paddr
         and b.audsid = userenv('sessionid')
