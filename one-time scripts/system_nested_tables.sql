@@ -32,3 +32,20 @@ where ct.elem_type_name= subq.type_name
   and (cnt_varchar2 = 1 and cnt_number = 1 and cnt_date = 0)
 order by type_name_list,
   attr_no;
+
+
+
+
+
+
+-- owner  : [null | <value>] : for example, 'SYS'
+-- fixed : [Y | N] : Y - количество полей, равно сумме количества из attrs, N - количество полей любое, главное, чтоы присутствовали attrs
+-- attrs : список типов данных атрибутов, которые должны присутствовать в типе
+with source as (
+    -- найти тип, владелец которого <ЛЮБОЙ>, в типе 3 поля, 2 из которых имеют типа VARCHAR2, одно поле имеет тип NUMBER
+    select null owner, 'Y' fixed, sys.ku$_objnumnamset(sys.ku$_objnumnam(name => 'VARCHAR2', obj_num => 2), 
+                                                       sys.ku$_objnumnam(name => 'NUMBER',   obj_num => 1), 
+                                                       sys.ku$_objnumnam(name => 'DATE',     obj_num => 0)) attrs from dual
+)
+
+select * from source;
