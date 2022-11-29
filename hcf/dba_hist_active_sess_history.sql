@@ -29,9 +29,9 @@
     select '7qfg0j2h5z617' sql_id, trunc(sysdate) - 30 btime, trunc(sysdate) etime from dual
  )
 select 
+--    (select trim(dbms_lob.substr(t.sql_text, 4000)) from dba_hist_sqltext t where s.sql_id = t.sql_id) AS text,
 --    s.sql_id AS sqlid,
     s.plan_hash_value hv,
---    (select trim(dbms_lob.substr(t.sql_text, 4000)) from dba_hist_sqltext t where s.sql_id = t.sql_id) AS text,
     trunc(w.begin_interval_time) AS tl,
     sum(s.executions_delta) AS e,
     round(sum(s.elapsed_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS ela,
