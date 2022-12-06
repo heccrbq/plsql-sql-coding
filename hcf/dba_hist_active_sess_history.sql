@@ -26,7 +26,7 @@
  * =============================================================================================
  */
 with source as (
-    select '7qfg0j2h5z617' sql_id, trunc(sysdate) - 30 btime, trunc(sysdate) etime from dual
+    select '7qfg0j2h5z617' sql_id, trunc(sysdate) - 30 btime, trunc(sysdate) + 1 etime from dual
  )
 select 
 --    (select trim(dbms_lob.substr(t.sql_text, 4000)) from dba_hist_sqltext t where s.sql_id = t.sql_id) AS text,
