@@ -3,6 +3,15 @@
 -- ALTER SESSION SET SQL_TRACE=TRUE;
 -- DBMS_SESSION.SET_SQL_TRACE (TRUE);
 
+
+---- 10046
+SQL> ALTER SYSTEM SET EVENTS 'sql_trace [sql:&&sql_id] bind=true, wait=true';
+
+---- 10053
+SQL> ALTER SESSION SET EVENTS 'trace[rdbms.SQL_Optimizer.*][sql:sql_id]';
+
+
+
 alter session set tracefile_identifier = "trace2356";
 
 -- проверка создался ли trace файл
