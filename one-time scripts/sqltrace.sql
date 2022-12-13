@@ -6,7 +6,7 @@
 
 ---- 10046
 SQL> ALTER SYSTEM SET EVENTS 'sql_trace [sql:&&sql_id] bind=true, wait=true';
-exec dbms_system.SET_BOOL_PARAM_IN_SESSION(<SID>,<SERIAL#>,'SQL_TRACE',FALSE)
+SQL> exec dbms_system.SET_BOOL_PARAM_IN_SESSION(<SID>,<SERIAL#>,'SQL_TRACE',FALSE);
 
 ---- 10053
 SQL> ALTER SESSION SET EVENTS 'trace[rdbms.SQL_Optimizer.*][sql:sql_id]';
