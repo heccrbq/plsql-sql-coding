@@ -13,6 +13,19 @@ SQL> ALTER SESSION SET EVENTS 'trace[rdbms.SQL_Optimizer.*][sql:sql_id]';
 
 
 
+begin
+    DBMS_MONITOR.serv_mod_act_trace_enable(
+        service_name=>'SYS$USERS', module_name=>'PL/SQL Developer', action_name=>'Primary Session'
+    );
+    DBMS_MONITOR.serv_mod_act_trace_disable(
+        service_name=>'SYS$USERS' , module_name=>'PL/SQL Developer', action_name=>'Primary Session'
+    );
+end;
+/
+
+
+
+
 alter session set tracefile_identifier = "trace2356";
 
 -- проверка создался ли trace файл
