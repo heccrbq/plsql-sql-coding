@@ -1,5 +1,4 @@
-with 
-    function plshprof_report (p_filename in varchar2) return clob
+with function plshprof_report (p_filename in varchar2) return clob
     is
         c_location constant varchar2(16) := 'PROFILER_DIR';
         l_clob     clob;
@@ -10,4 +9,11 @@ with
         
         return l_clob;
     end;
-select plshprof_report(p_filename => 'hprof_rtwr_1546469566_3.trc') from dual;
+source as (
+    select 'hprof_rtwr_1546469566_3.txt' filename from dual
+)
+select 
+    substr(s.filename, 1, instr(s.filename, '.', -1)) || 'html' file#,
+    plshprof_report(p_filename => s.filename) output 
+from source s;
+/
