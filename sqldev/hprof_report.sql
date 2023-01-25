@@ -10,7 +10,7 @@ with function plshprof(p_filename in varchar2) return clob
         return l_clob;
     end;
 source as (
-    select 'hprof_rtwr_1546469566_3.txt' filename from dual
+    select 'hprof_rtwr_1546469566_3.trc' filename from dual
 )
 select 
     substr(s.filename, 1, instr(s.filename, '.', -1)) || 'html' file#,
