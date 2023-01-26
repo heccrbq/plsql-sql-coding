@@ -1,5 +1,5 @@
- -- #1. estimated used table size based on table statistics
-  with source as (
+-- #1. estimated used table size based on table statistics
+with source as (
     select 'A4M' table_owner, 'TDOCUMENT' table_name from dual
 )
 select 
