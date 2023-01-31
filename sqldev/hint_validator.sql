@@ -80,6 +80,11 @@ begin
     return l_hint_list;
 end hint_validator;
 
-select * from table(hint_validator(p_object_owner => 'A4M',
-                                 p_object_name  => 'ERROR',
+select distinct
+    attribute_name hint,
+    attribute_subname status,
+    attribute_num_value line,
+    attribute_str_value source
+from table(hint_validator(p_object_owner => 'A4M',
+                                 p_object_name  => 'SCH13_DEPOSIT',
                                  p_object_type  => 'PACKAGE BODY'));
