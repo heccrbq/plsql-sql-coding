@@ -96,6 +96,7 @@ from all_objects ao,
                          p_object_name  => ao.object_name,
                          p_object_type  => ao.object_type)) hv
 where ao.object_type = 'PACKAGE BODY'
+    and ao.owner = 'A4M'
     and ao.object_name like 'SCH_%'
     and hv.attribute_subname = 'INVALID'
 order by object_name, line;
