@@ -1,6 +1,6 @@
 with function hint_validator(p_object_owner in all_objects.owner%type,
-                           p_object_name  in all_objects.object_name%type,
-                           p_object_type  in all_objects.object_type%type) return sys.dm_items is
+                             p_object_name  in all_objects.object_name%type,
+                             p_object_type  in all_objects.object_type%type) return sys.dm_items is
     -- 
     c_single_line_hint_init_char  constant varchar2(3):= '--+';
     c_multi_line_hint_init_char   constant varchar2(3) := '/*+';
