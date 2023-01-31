@@ -11,7 +11,6 @@ with function hint_validator(p_object_owner in all_objects.owner%type,
     l_mposition_end  integer;
     l_hint_type      varchar2(32);  -- SINGLE | MULTI
     l_raw_hint_list  dbms_sql.varchar2a;
-    --
     l_raw_index      binary_integer;
     --
     l_hint_list      sys.dm_items := sys.dm_items();
@@ -63,7 +62,7 @@ begin
             where xt.name is not null
             order by hint
         )
-        loop null;
+        loop
             l_hint_list.extend;
             l_hint_list(l_hint_list.count) := sys.dm_item(attribute_name      => i.hint, 
                                                           attribute_subname   => i.status,
