@@ -1,4 +1,4 @@
-with function hint_checker(p_object_owner in all_objects.owner%type,
+with function hint_validator(p_object_owner in all_objects.owner%type,
                            p_object_name  in all_objects.object_name%type,
                            p_object_type  in all_objects.object_type%type) return sys.dm_items is
     -- 
@@ -78,8 +78,8 @@ begin
     end loop;
     
     return l_hint_list;
-end hint_checker;
+end hint_validator;
 
-select * from table(hint_checker(p_object_owner => 'A4M',
+select * from table(hint_validator(p_object_owner => 'A4M',
                                  p_object_name  => 'ERROR',
                                  p_object_type  => 'PACKAGE BODY'));
