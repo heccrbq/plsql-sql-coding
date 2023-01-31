@@ -5,6 +5,7 @@ with function hint_validator(p_object_owner in all_objects.owner%type,
     c_single_line_hint_init_char  constant varchar2(3):= '--+';
     c_multi_line_hint_init_char   constant varchar2(3) := '/*+';
     c_multi_line_hint_final_char  constant varchar2(2) := '*/';
+    c_undocumented_hint_list      constant sys.odcivarchar2list := sys.odcivarchar2list('PARALLEL');
     --
     l_sposition      integer;
     l_mposition      integer;
@@ -29,7 +30,7 @@ begin
                 l_hint_type := 'SINGLE';
             elsif l_mposition > l_sposition then
                 l_hint_type := 'MULTI';
-            end if;            
+            end if;
         end if;
         
         if l_hint_type = 'SINGLE' then     
@@ -57,8 +58,12 @@ begin
             select 
                 distinct coalesce(h.name, xt.name) hint, nvl2(h.name, 'VALID', 'INVALID') status
             from xmltable('ora:tokenize(., " ")' passing regexp_replace(l_raw_hint_list(l_raw_index) || ' ', '(\([^)]*?\))') columns name varchar2(32) path '.')xt 
-                left join v$sql_hint h 
-                    on h.name = upper(trim(xt.name))
+                left join (
+                    select name from v$sql_hint 
+                    union all 
+                    select column_value from table(c_undocumented_hint_list)
+                    ) h 
+                    on h.name = upper(trim(trim(chr(10) from xt.name)))
             where xt.name is not null
             order by hint
         )
@@ -94,4 +99,4 @@ where ao.object_type = 'PACKAGE BODY'
     and ao.object_name like 'SCH_%'
     and hv.attribute_subname = 'INVALID'
 order by object_name, line;
-/                            
+/
