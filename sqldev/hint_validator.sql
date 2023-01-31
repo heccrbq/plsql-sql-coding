@@ -80,10 +80,15 @@ begin
 end hint_validator;
 
 select distinct
-    attribute_name hint,
-    attribute_subname status,
-    attribute_num_value line,
-    attribute_str_value source
-from table(hint_validator(p_object_owner => 'A4M',
-                                 p_object_name  => 'SCH13_DEPOSIT',
-                                 p_object_type  => 'PACKAGE BODY'));
+    ao.owner,
+    ao.object_name,
+    hv.attribute_name hint,
+    hv.attribute_subname status,
+    hv.attribute_num_value line,
+    hv.attribute_str_value source
+from all_objects ao,
+    table(hint_validator(p_object_owner => ao.owner,
+                         p_object_name  => ao.object_name,
+                         p_object_type  => ao.object_type)) hv
+where ao.object_type = 'PACKAGE BODY'
+  and ao.object_name like 'SCH_%';
