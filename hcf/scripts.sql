@@ -472,10 +472,10 @@ select tbl, dbms_xmlgen.getxmltype('select /*+parallel(8)*/ count(1) from ' || t
 
 
 
+--==================================================================================
 
 
-
-
+-- ADAPTIVE PLAN
 select 
     sp.id, decode(skip, 1,'SKIP', ' ') skip,
     lpad(' ', 4*sp.depth) || sp.operation || nvl2(sp.optimizer, '  Optimizer=' || sp.optimizer, null) ||
@@ -493,6 +493,32 @@ select sp.sql_id, xt.* from v$sql_plan sp,
                 skip number path '@skp') xt
     where sp.other_xml is not null) t on t.sql_id = sp.sql_id and t.id = sp.id
 where sp.sql_id = 'ff8wx3qsmwr3r' order by sp.child_number, sp.id;
+
+
+select 
+    sp.id, decode(skip, 1,'SKIP', ' ') skip,
+    lpad(' ', 4*sp.depth) || sp.operation || nvl2(sp.optimizer, '  Optimizer=' || sp.optimizer, null) ||
+        nvl2(sp.options, ' (' || sp.options || ')', null) || 
+        nvl2(sp.object_name, ' OF ''' || nvl2(sp.object_owner, sp.object_owner || '.', null) || sp.object_name || '''', null) ||
+        decode(sp.object_type, 'INDEX (UNIQUE)', ' (UNIQUE)') ||
+        '  (Cost=' || sp.cost || ' Card=' || sp.cardinality || ' Bytes=' || sp.bytes || ')' sqlplan
+from dba_hist_sql_plan sp
+left join (
+select sp.sql_id, xt.* from dba_hist_sql_plan sp,
+    xmltable('/other_xml/display_map/row' passing xmltype(sp.other_xml)
+        columns id number path '@op',
+--                parent_id number path '@par',
+--                depth number path '@dep',
+                skip number path '@skp') xt
+    where sp.other_xml is not null) t on t.sql_id = sp.sql_id and t.id = sp.id
+where sp.sql_id = '6hjs0624rwqyy' order by sp.id;
+
+
+
+
+
+
+--============================================================================
 
 
 
