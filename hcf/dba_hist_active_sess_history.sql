@@ -158,7 +158,7 @@ sbq as (
         round(sum(tm_delta_db_time)/1e6, 2) db_time, round(sum(tm_delta_cpu_time)/1e6, 2) cpu_time
     from dba_hist_active_sess_history ash
         join source s on s.sid = ash.session_id and s.serial# = ash.session_serial#
-    where snap_id between s.bsnap_id and s.esnap_id
+--    where snap_id between s.bsnap_id and s.esnap_id
     group by sql_id
 )
 
