@@ -71,6 +71,7 @@ order by tl desc;
  * @param   etime  (DATE)       Окончание периода
  * =============================================================================================
  * Описание полей:
+ *  - sid_serial      : SID и SERIAL сессии
  *  - sql_exec_id     : идентификатор запуска запроса
  *  - plan_hash_value : хэш значение плана выполнения
  *  - snap_range      : период снепшотов, в котором был выполнен запрос
@@ -92,9 +93,10 @@ order by tl desc;
  * =============================================================================================
  */
 with source as (
-    select '1yw4fsfy5mfn9' sql_id, trunc(sysdate) - 30 btime, sysdate etime from dual
+    select '6hjs0624rwqyy' sql_id, trunc(sysdate) - 30 btime, sysdate etime from dual
  )
 select 
+    ash.session_id || ',' || ash.session_serial# sid_serial, 
     ash.sql_exec_id, 
     ash.sql_plan_hash_value plan_hash_value,
     min(w.snap_id) || ' - ' || max(w.snap_id) snap_range,
@@ -119,7 +121,9 @@ from source s
                             and w.dbid = ash.dbid
                             and w.snap_id = ash.snap_id
                             and w.begin_interval_time between s.btime and s.etime
-group by ash.sql_exec_id,
+group by ash.session_id,
+    ash.session_serial#,
+    ash.sql_exec_id,
     ash.sql_exec_start,
     ash.sql_plan_hash_value
 order by sql_exec_start desc nulls last;
