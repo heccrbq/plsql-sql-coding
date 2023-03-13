@@ -134,6 +134,46 @@ order by sql_exec_start desc nulls last;
 
 /**
  * =============================================================================================
+ * Поиск long-running запросов по сессии за промежуток времени в истории
+ * =============================================================================================
+ * @param   sid      (NUMBER)   Уникальный идентификатор сессии
+ * @param   serial#  (NUMBER)   Уникальный номер сессии
+ * @param   bsnap_id (NUMBER)   Уникальный идентификатор снепшота начала выполнения
+ * @param   esnap_id (NUMBER)   Уникальный идентификатор снепшота окончания выполнения
+ * =============================================================================================
+ * Описание полей:
+ *  - sql_id   : уникальный идентификатор запроса (SQL id)
+ *  - unq_run  : количество уникальных запусков запроса (EXEC_ID + EXEC_START)
+ *  - rowcount : количество ASH эвентов, найденных в истории для запроса
+ *  - db_time  : время работы базы данных, затраченное на запрос (в секундах)
+ *  - cpu_time : время работы процессора, затраченное на запрос (в секундах)
+ *  - sql_text : текст запроса, взятый из истории
+ * =============================================================================================
+ */
+with source as (
+    select 7372 sid, 21398 serial#, 110349 bsnap_id, 110354 esnap_id from dual),
+sbq as (
+    select /*+no_merge*/
+        sql_id, count(distinct sql_exec_id || to_char(sql_exec_start, 'yyyymmddhh24:mi:ss')) unq_run, count(1) rowcount,
+        round(sum(tm_delta_db_time)/1e6, 2) db_time, round(sum(tm_delta_cpu_time)/1e6, 2) cpu_time
+    from dba_hist_active_sess_history ash
+        join source s on s.sid = ash.session_id and s.serial# = ash.session_serial#
+    where snap_id between s.bsnap_id and s.esnap_id
+    group by sql_id
+)
+
+select sbq.*, 
+    s.sql_text
+from sbq, dba_hist_sqltext s
+where sbq.sql_id = s.sql_id(+)
+order by rowcount desc;
+
+
+
+
+
+/**
+ * =============================================================================================
  * Сбор информации о событиях ожидания по конкретному запуску запроса
  * =============================================================================================
  * @param   sql_id      (VARCHAR2)   Уникальный идентификатор запроса
