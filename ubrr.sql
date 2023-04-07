@@ -1113,4 +1113,36 @@ select * from dba_tab_col_statistics where table_name = 'UBRR_FSSP_CODE_INC_TRN_
 select * from dba_users order by 1;
 
 
-select * from UBRR_FSSP_CODE_INC_TRN_TWR;
+
+
+-- Средняя скорость плана выполнения
+with source as (
+    select 'fg35593451dqj' sql_id, trunc(sysdate) - 30 btime, sysdate etime from dual
+),
+stat as (
+    select
+        st.*
+    from source s
+        join dba_hist_snapshot w on w.begin_interval_time between s.btime and s.etime
+        join dba_hist_sqlstat st on st.snap_id = w.snap_id
+                                and st.dbid = w.dbid
+                                and st.instance_number = w.instance_number 
+                                and st.sql_id = s.sql_id
+)
+
+select 
+    sql_id, plan_hash_value, 
+    round(avg(db_time)/1e3) avg#, 
+    round(min(db_time)/1e3) min#, 
+    round(max(db_time)/1e3) max#, 
+    count(1) sqlexec
+from (
+    select 
+        s.sql_id, s.plan_hash_value,
+        sum(ash.tm_delta_db_time) db_time
+    from stat s, dba_hist_active_sess_history ash 
+    where s.snap_id = ash.snap_id 
+        and s.sql_id = ash.sql_id 
+        and s.plan_hash_value = ash.sql_plan_hash_value
+    group by s.sql_id, s.plan_hash_value, sql_exec_id,sql_exec_start)
+group by sql_id, plan_hash_value;
