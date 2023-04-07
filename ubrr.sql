@@ -923,7 +923,7 @@ order by job_prefix, rowcount desc;
 
 -- топ запросов из AWR
 with source as (
-    select trunc(sysdate) - 30 btime, trunc(sysdate) + 1 etime from dual
+    select sys.odcivarchar2list('06hg90px1gzhc') sql_id, trunc(sysdate) - 30 btime, trunc(sysdate) + 1 etime from dual
  )
 select 
     cn.command_name cn,
@@ -954,9 +954,9 @@ where s.snap_id = w.snap_id
     and s.instance_number = w.instance_number
     and s.sql_id = st.sql_id
     and st.command_type = cn.command_type
---    and s.sql_id = src.sql_id
+--    and s.sql_id in (select column_value from table(src.sql_id))
     and w.begin_interval_time between src.btime and src.etime
-    and s.plan_hash_value <> 0
+    and cn.command_name not in ('PL/SQL EXECUTE')
 group by trunc(w.begin_interval_time),
     cn.command_name,
     s.sql_id,
