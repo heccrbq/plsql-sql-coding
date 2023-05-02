@@ -10,16 +10,18 @@
  *  - text  : текст запроса (SQL Text)
  *  - sqlid : уникальный идентификатор запроса (SQL id)
  *  - tl    : дата и время начала снепшота, в котором был замечен запрос (Timeline)
- *  - e     : количество запусков в рамках группировки (#Executions)
+ *  - e     : количество запусков в рамках группировки (Executions)
+ *  - pct_e : процентное соотношение запусков по разным планам выполнения по дню
+ *  - ela_t : общее время выполнения, затраченное на все запуски запроса (Elapsed Time (s) Total)
  *  - ela   : Среднее время выполнения запроса в секундах (Avg Elapsed Time (s) per Exec) 
  *  - cpu   : Среднее время использование процессорных ресурсов (Avg CPU Time (s) per Exec)
  *  - io    : Среднее время, затраченное на операции ввода-вывода (Avg I/O Time (s) per Exec)
- *  - cc    : Среднее время, затраченное на события конкуренции в секундах (Avg Concurrency Wait Time)
- *  - app   : Среднее время, затраченное на ожидания приложением в секундах (Avg Application Wait Time)
- *  - plsql : Среднее время выполнения логики PL/SQL движком в секундах (Avg PL/SQL Execution Time)
- *  - java  : Среднее время выполнения логики JVM в секундах (Avg Java Execution Time)
- *  - disk  : Среднее количество блоков, вычитанных с диска (Avg Physical Reads per Exec)
- *  - lio   : Среднее количество блоков, вычитанных из памяти в режимах cr и cu (Avg Logical Reads per Exec)
+ *  - cc    : Среднее время, затраченное на события конкуренции в секундах (Avg Concurrency Wait Time (s))
+ *  - app   : Среднее время, затраченное на ожидания приложением в секундах (Avg Application Wait Time (s))
+ *  - plsql : Среднее время выполнения логики PL/SQL движком в секундах (Avg PL/SQL Execution Time (s))
+ *  - java  : Среднее время выполнения логики JVM в секундах (Avg Java Execution Time (s))
+ *  - disk  : Среднее количество блоков, вычитанных с диска (Avg Physical Reads per Exec (number of blocks))
+ *  - lio   : Среднее количество блоков, вычитанных из памяти в режимах cr и cu (Avg Logical Reads per Exec (number of buffers))
  *  - r     : Среднее количество строк, возвращенное запросом (Avg Rows Processed per Exec)
  *  - pc    : Среднее количество parse calls (Avg Parse Calls)
  *  - px    : Среднее количество параллелей, используемых запросом (Avg PX Servers)
@@ -34,6 +36,8 @@ select
     s.plan_hash_value hv,
     trunc(w.begin_interval_time) AS tl,
     sum(s.executions_delta) AS e,
+    round(ratio_to_report(sum(s.executions_delta))over(partition by s.sql_id, trunc(w.begin_interval_time)) * 100, 2) pct_e,
+    round(sum(s.elapsed_time_delta)/1e6, 4) ela_t,
     round(sum(s.elapsed_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS ela,
     round(sum(s.cpu_time_delta)         / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS cpu,
     round(sum(s.iowait_delta)           / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS io,
