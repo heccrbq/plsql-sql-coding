@@ -48,6 +48,7 @@ select
     ,t.segment_space_management
 	-- temp memory usage --
     ,round(tf.total_space/1024/1024/1024, 3)  as "Total Temp space, Gb"
+    ,round(tf.max_temp_size/1024/1024/1024,  3) as "Max Temp space, Gb"
     ,round(tf.useful_space/1024/1024/1024, 3) as "Useful Temp space, Gb"
     ,round(ss.total_blocks * t.block_size/1024/1024/1024, 3) as "Formatted Temp space, Gb"
     ,round(ss.used_blocks * t.block_size/1024/1024/1024,  3) as "Used Temp space, Gb"
@@ -59,7 +60,8 @@ from v$sort_segment ss
     outer apply
         (select 
              sum(tf.bytes) total_space
-             ,sum(tf.user_bytes) useful_space
+            ,sum(tf.user_bytes) useful_space
+            ,sum(tf.maxbytes) max_temp_size
         from dba_temp_files tf 
         where tf.tablespace_name = ss.tablespace_name) tf;
 
