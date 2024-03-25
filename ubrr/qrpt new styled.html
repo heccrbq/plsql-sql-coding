@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='UTF-8'>
+  
+  <title>Result Data</title>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  
+  <style>
+  * { 
+    margin: 0; 
+    padding: 0; 
+  }
+  body { 
+    font: 14px/1.4 Palatino, Serif; 
+  }
+  
+  /* 
+  Generic Styling, for Desktops/Laptops 
+  */
+  table { 
+    width: 100%; 
+    border-collapse: collapse; 
+  }
+  /* Zebra striping */
+  tr:nth-of-type(odd) { 
+    background: #eee; 
+  }
+  th { 
+    background: #333; 
+    color: white; 
+    font-weight: bold; 
+  }
+  td, th { 
+    padding: 6px; 
+    border: 1px solid #9B9B9B; 
+    text-align: left; 
+  }
+  @media 
+  only screen and (max-width: 760px),
+  (min-device-width: 768px) and (max-device-width: 1024px)  {
+    table, thead, tbody, th, td, tr { display: block; }
+    thead tr { position: absolute;top: -9999px;left: -9999px;}
+    tr { border: 1px solid #9B9B9B; }
+    td { border: none;border-bottom: 1px solid #9B9B9B; position: relative;padding-left: 50%; }
+    
+    td:before { position: absolute;top: 6px;left: 6px;width: 45%; padding-right: 10px; white-space: nowrap;}
+    
+    /*
+    Label the data
+    */
+td:nth-of-type(1):before { content: "COMMAND_NAME"; }
+td:nth-of-type(2):before { content: "OBJECT_NAME"; }
+td:nth-of-type(3):before { content: "SQL_ID"; }
+td:nth-of-type(4):before { content: "PLAN_HASH_VALUE"; }
+td:nth-of-type(5):before { content: "OPTIMIZER_MODE"; }
+td:nth-of-type(6):before { content: "PARSING_SCHEMA_NAME"; }
+td:nth-of-type(7):before { content: "MODULE"; }
+td:nth-of-type(8):before { content: "ACTION"; }
+td:nth-of-type(9):before { content: "LAST_ACTIVE_TIME"; }
+td:nth-of-type(10):before { content: "VERSION_COUNT"; }
+td:nth-of-type(11):before { content: "PARSE_CALLS"; }
+td:nth-of-type(12):before { content: "EXECUTIONS"; }
+td:nth-of-type(13):before { content: "DISK_READS"; }
+td:nth-of-type(14):before { content: "DIRECT_READS"; }
+td:nth-of-type(15):before { content: "DIRECT_WRITES"; }
+td:nth-of-type(16):before { content: "BUFFER_GETS"; }
+td:nth-of-type(17):before { content: "ROWS_PROCESSED"; }
+td:nth-of-type(18):before { content: "ELAPSED_TIME/1E6"; }
+td:nth-of-type(19):before { content: "CPU_TIME/1E6"; }
+td:nth-of-type(20):before { content: "USER_IO_WAIT_TIME/1E6"; }
+td:nth-of-type(21):before { content: "CONCURRENCY_WAIT_TIME/1E6"; }
+td:nth-of-type(22):before { content: "PLSQL_EXEC_TIME/1E6"; }
+td:nth-of-type(23):before { content: "JAVA_EXEC_TIME/1E6"; }
+td:nth-of-type(24):before { content: "SQL_PROFILE"; }
+td:nth-of-type(25):before { content: "SQL_PLAN_BASELINE"; }
+  }
+  
+  /* Smartphones (portrait and landscape) ----------- */
+  @media only screen
+  and (min-device-width : 320px)
+  and (max-device-width : 480px) {
+    body { 
+      padding: 0; 
+      margin: 0; 
+      width: 320px; }
+    }
+  
+  /* iPads (portrait and landscape) ----------- */
+  @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+    body { 
+      width: 495px; 
+    }
+  }
+  
+  </style>
+  <!--<![endif]-->
+<script type="text/javascript">
+
+function search(){
+  
+  var s = document.getElementById('search').value;
+
+  rows = document.getElementById('data').getElementsByTagName('TR');
+  for(var i=0;i<rows.length;i++){
+    if ( rows[i].textContent.indexOf(s)>0  || s.length==0 ) {
+	  rows[i].style.display ='';
+    } else {
+      rows[i].style.display ='none';
+    }
+  }
+}
+
+
+var timer;
+function delayedSearch() {
+	clearTimeout(timer);
+	console.log('delay-ing')
+    timer = setTimeout(function () {
+		console.log('delay-running')
+		search();
+    }, 500);
+  }</script>
+</head>
+
+<body>
+<div><input type="text" size="30" maxlength="1000" value="" id="search" onkeyup="delayedSearch();" /><input type="button" value="Go" onclick="lsearch();"/> </div>
+<table><thead><tr>	<th>COMMAND_NAME</th>
+	<th>OBJECT_NAME</th>
+	<th>SQL_ID</th>
+	<th>PLAN_HASH_VALUE</th>
+	<th>OPTIMIZER_MODE</th>
+	<th>PARSING_SCHEMA_NAME</th>
+	<th>MODULE</th>
+	<th>ACTION</th>
+	<th>LAST_ACTIVE_TIME</th>
+	<th>VERSION_COUNT</th>
+	<th>PARSE_CALLS</th>
+	<th>EXECUTIONS</th>
+	<th>DISK_READS</th>
+	<th>DIRECT_READS</th>
+	<th>DIRECT_WRITES</th>
+	<th>BUFFER_GETS</th>
+	<th>ROWS_PROCESSED</th>
+	<th>ELAPSED_TIME/1E6</th>
+	<th>CPU_TIME/1E6</th>
+	<th>USER_IO_WAIT_TIME/1E6</th>
+	<th>CONCURRENCY_WAIT_TIME/1E6</th>
+	<th>PLSQL_EXEC_TIME/1E6</th>
+	<th>JAVA_EXEC_TIME/1E6</th>
+	<th>SQL_PROFILE</th>
+	<th>SQL_PLAN_BASELINE</th>
+</tr></thead>
+<tbody id="data">
+
+	<tr>
+<td>SELECT</td>
+<td> (line : 0)</td>
+<td>6mc71tv6p5fyy</td>
+<td align="right">765320052</td>
+<td>ALL_ROWS</td>
+<td>UBRR_CRM</td>
+<td>oracle@bdbp02 (TNS V1-V3)</td>
+<td>&nbsp;</td>
+<td>16.12.2023 16:10:27</td>
+<td align="right">4</td>
+<td align="right">7081</td>
+<td align="right">185692</td>
+<td align="right">282496</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">4246552516</td>
+<td align="right">124973</td>
+<td align="right">294971,189531</td>
+<td align="right">131350,65058</td>
+<td align="right">207,167652</td>
+<td align="right">3,641027</td>
+<td align="right">147487,06718</td>
+<td align="right">0</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+	</tr>
+</tbody></table><!-- SQL:
+select 
+    scn.command_name, do.object_name || ' (line : ' || sa.program_line# || ')' object_name,
+    sql_id, plan_hash_value, optimizer_mode, parsing_schema_name, module, action, last_active_time,
+    version_count, parse_calls, executions, disk_reads, direct_reads, direct_writes, buffer_gets, rows_processed, 
+    elapsed_time/1e6, cpu_time/1e6, user_io_wait_time/1e6, concurrency_wait_time/1e6, plsql_exec_time/1e6, java_exec_time/1e6, 
+    sql_profile, sa.sql_plan_baseline
+from v$sqlarea sa
+    join dba_hist_sqlcommand_name scn using (command_type)
+    left join dba_objects do on do.object_id = sa.program_id
+where sql_id = '6mc71tv6p5fyy'--></body></html>

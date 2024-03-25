@@ -1,0 +1,304 @@
+﻿/**
+ * =============================================================================================
+ * Small talk
+ * =============================================================================================
+ */
+
+1. Как узнать количество строк в огромной таблице, не выполняя select count(1) к этой таблице?
+	- посмотреть в user_tables, user_tab_statistics
+	- использовать функцию approx_count
+2. Назовите все отличие между TRUNCATE и DELETE
+	- относятся к разным группам DDL и DML
+	- до и после TRUNCATE выполняется неявный commit
+	- TRUNCATE невозможно откатить, DELETE - можно
+	- требуются развиые виды блокировок: TM vs TX
+	- TRUNCATE работает быстрее чем DELETE
+	- TRUNCATE опускает HWM
+	- TRUNCATE требует привилегию DROP TABLE
+	- после TRUNCATE меняется значение data_object_id
+3. Как получить перечисление всех значений столба в одну строку через запятую?
+	- wm_concat
+	- listsagg
+	- xmlagg
+	- user-defined function
+4. Как узнать какие объекты инвалидируются, если удалить данный объект?
+	- посмотреть в dba/ all / user_dependencies
+5. Что будет, если добавить order by в выражение sum()over(). Будут ли отличаться результаты запросов?
+	- сумма с нарастающим итогом по группе (если есть в partition by). Результат без и с order by будут отличаться
+6. Будут ли содержаться дубли в запросе виде select union all select union select
+	- Нет
+7. Чем Primary Key отличается от Unique констрейнта.
+	- Unq может содержать Null значения
+	- PK можеть быть только один на таблице
+8. Что такое ретроспективные запросы? (flashback queries)
+	 - запрос данных из сегмента отката (as of timestamp)
+9. Как сделать так, чтобы мог работать только один экземпляр метода, а все попытки запустить его еще раз завершались ошибкой?
+	- dbms_lock
+	- собственная таблица, lock table
+	- sys_context
+10. Есть таблица A (3 строки), Б (5 строк). Сколько строк вернет запрос вида select * from a,b.
+    Сколько строк вернет запрос, если таблица А будет пустая.
+	- 15
+	- 0
+11. В каком порядке выполняются операторы SELECT / FROM / WHERE / CONNECT BY / GROUP BY / HAVING / ORDER BY ?
+	- FROM - CONNECT BY - WHERE - GROUP BY - HAVING - SELECT - ORDER BY
+
+
+/**
+ * =============================================================================================
+ * Performance and Tuning
+ * =============================================================================================
+ * Чтение плана запроса:
+ *  - 6 : 
+ * Умение пользоваться хинтами:
+ * Понимание архитектуры, эвенты, параметры:
+ * 	- 1 : 
+ *	- 2 : 
+ * Умение пользоваться отладочной информацией и системной статистикой:
+ *  - 3 : 
+ * Решаем задачи:
+ * 	- 4 :
+ */
+
+ 1. Структура сегмента? Из чего состоит, в какие юниты входит?
+	Состав: блок - экстент - сегмент - тбс - датафайл
+ 2. HWM сегмента. Что это?
+ 3. где посмотреть статистику по таблице? Где по полям таблицы?
+ 4. Как проводишь оптимизацию? С чего начинаешь?
+ 5. Как уменьшить фактор кластеризации?
+ 6. Как происходит разбор запроса и построение плана? (семантический и синтаксический анализ)
+ 7. Что происходит во время работы DML (redo, undo, db writer)
+ 8. Как и когда надо создавать индекс? Вот есть таблица без индексов.
+ 9. В каком порядке выполняются операторы SELECT / FROM / WHERE / CONNECT BY / GROUP BY / HAVING / ORDER BY ?
+	1. Sub-queries
+	2. Joins (including join conditions in the WHERE clause)
+	3. PIVOT and UNPIVOT
+	4. START WITH and CONNECT BY clauses
+	5. WHERE clause
+	6. GROUP BY clause and aggregate functions
+	7. HAVING clause
+	8. Analytic functions (such as RANK)
+	9. ORDER BY clause
+10. Назови 5 хинтов, которые знаешь?
+11. Что за хинт APPEND, как и в каком случае он работает.
+12. Что за хинт no_merge / push_pred / precompute_subquery?
+13. Почему запрос вида select count(1) из пустой таблицы может работать целый час?
+14. Назову 3-5 параметров инстанса (можно скрытые), которые ты знаешь
+	- db_file_multiblock_read_count
+	- optimizer_index_cost_adj
+	- control_management_pack_access
+	- undo_retention
+	- statistics_level
+	- _optim_peek_user_binds
+15. Что такое event из v$session? Топ-5 эвентов.
+16. Как организован btree-индекс.
+17. Типы соединений таблиц. NLJ batching, One-pass HJ
+18. Пути доступа к данным (к таблицам, к индексам)
+19. Разница между index fast full scan и index full scan 
+20. AWR, ASH, SQL Monitoring Report, Профилирование, трассировка
+21. Запрос раньше работал 10 минут, сейчас работает час. Что делать? Куда смотреть?
+22. Как посмотреть план выполнения? С какой строки начинаем его читать?
+23. Что такое бинд переменные и как можно заставить оракл заменять все скаляры на бинды?
+	- cursor_sharing
+24. Как посмотреть сколько каких ресурсов использовать запрос?
+	- gather_plan_statistics (statistics_level=all) + allstats last
+25. Как работает параллельный запрос? Что такое Consumer/Producer? Что такое DFO?
+26. Deterministic vs result cache vs subquery caching
+27. Как избежать конкуренции за индекс?
+	- индекс с ревесивным ключом
+	- hash партиционированный индекс
+28. Что такое bind peeking?
+29. Snapshot too old. Как возникает?
+30. Bloom filter
+
+
+
+
+
+
+
+
+-1. Запрос вида select * union select падает на нехватке места в темпе.
+0. Несколько задач на сортировку:
+	select 1 from dual order by 1;
+	select 2 from dual order by 2;
+	select 2 from dual order by 1+1;
+
+	select 1 from dual order by "1";
+	select 2 from dual order by "2";
+
+	select 1 "2" from dual order by 1;
+	select 1 "2" from dual order by "1";
+	select 1 "2" from dual order by "1+1";
+	
+	select x "y" from (select 1 x from dual) order by "x";
+	select x "y" from (select 1 x from dual) order by "y";
+	
+	select 1 from dual where exists (select 1/0 from dual);
+1. Две одноколоночные таблицы со значениями 1,2,3. Что вернет запрос select * from t1, t2? Как тип операции соединения будет между таблицами? 
+	- MERGE JOIN CARTESIAN
+2. Если выполнить truncate T1 и выполнить еще раз запрос из п.1, что вернется?
+3. Вывести в столбик все заглавные буквы английского алвафита (не обязательно по порядку) без использования оператора union:
+	- select chr(".") letter from xmltable('65 to 90' columns "." number)
+	- with source as (select 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' str from dual)
+      select substr(column_value, level, 1) letter from source, table(sys.odcivarchar2list(str)) connect by level <= length(str);
+4. Есть таблица из 7 записей (1,2,3,4,5,6,7). Необходимо получить 1+2+3=7, 4+5+6=15, 7=7
+4. Есть таблица из трех полей (ID сотрудника, дата встравки записи, флаг In/Out вход или выход). Когда сотрудник приходит на работу происходит вставка I, когда уходит O.
+   Требуется определить где был сотрудник в определенное время - на работе или нет, имя в качестве входных данных ID и дату 2022-01-02
+   -------------------------
+   | ID | DT         | FLG |
+   -------------------------
+   |  1 | 2022-01-01 | IN  |
+   |  1 | 2022-01-03 | OUT |
+   |  1 | 2022-01-05 | IN  |
+   |  1 | 2022-01-07 | OUT |
+   |  2 | 2022-01-01 | IN  |
+   |  2 | 2022-01-03 | OUT |
+   -------------------------
+   
+	with tbl(id, dt, flg) as (
+      select 1, date'2022-01-01', 'IN' from dual union all
+      select 1, date'2022-01-03', 'OUT' from dual union all
+      select 1, date'2022-01-05', 'IN' from dual union all
+      select 1, date'2022-01-07', 'OUT' from dual union all
+      select 2, date'2022-01-01', 'IN' from dual union all
+      select 2, date'2022-01-03', 'OUT' from dual
+      )
+	  select max(flg)keep(dense_rank last order by dt) from tbl where id = 1 and dt <= date'2022-01-02'
+5. Есть таблица на 10 лярдов и на ней индекс по одному полю ID. Хочу получить минимальное и максимальное значение поля ID. Как сделать?
+	- разнести по двум подзапросам, чтобы добиться FULL SCAN (MIN/MAX)
+6. Таблица 10 миллиардов. Надо распилить как 9 и 1 (по дате за последний год). Как бы ты это делал?
+	- Отключаем индексы и констрейнты
+	- Создаем третью партицированную таблицу с 2-мя партциями
+	- выполняем insert select в третью таблицу
+	- выполняем exchange partition
+	- rebuild index и enable constraint
+7. Почитаем план выполнения
+-------------------------------------
+INSERT INTO A4M.UBRR_395P_TRNFROMTWR SELECT/*+ ALL_ROWS use_nl(set0, doc) */ SET0.CREDITACCOUNT, SET0.DEBITACCOUNT, SET0.VALUE, DOC.OPDATE 
+FROM ( SELECT /*+ NO_MERGE */ DOCNO, VALUE, DEBITACCOUNT, CREDITACCOUNT FROM ( SELECT /*+ index(b1 iEntry_debitAccount) */ B1.VALUE, B1.DOCNO, 
+B1.DEBITACCOUNT, B1.CREDITACCOUNT FROM TENTRY B1 WHERE B1.BRANCH = :B2 AND B1.DEBITACCOUNT = :B1 AND B1.VALUE != 0 ) SET1 ) SET0, TDOCUMENT 
+DOC WHERE DOC.BRANCH = :B2 AND DOC.DOCNO = SET0.DOCNO AND DOC.OPDATE BETWEEN :B4 AND :B3 AND DOC.NEWDOCNO IS NULL
+ 
+Execution Plan																								    	SQL Monitoring Report
+---------------------------------------------------------------------------------------------------------			------------------------------------------
+| Id  | Operation                        | Name                 | Rows  | Bytes | Cost (%CPU)| Time     |			| Execs	| Rows | IO Req    |  Cpu | Wait |
+---------------------------------------------------------------------------------------------------------			------------------------------------------
+|   0 | INSERT STATEMENT                 |                      |       |       |   933 (100)|          |			|	  1	|    0 |           |      |      |
+|   1 |  LOAD TABLE CONVENTIONAL         | UBRR_395P_TRNFROMTWR |       |       |            |          |			|     1 |    0 |           |      |      |
+|   2 |   NESTED LOOPS                   |                      |       |       |            |          |			|     1 |   18 |           | 8.7% |      |
+|   3 |    NESTED LOOPS                  |                      |   316 | 22120 |   933   (0)| 00:00:01 |       	|     1 |   4G |           |      |      |
+|   4 |     VIEW                         |                      |   316 | 15800 |   301   (0)| 00:00:01 |       	|     1 |   27 |           |      |      |
+|*  5 |      FILTER                      |                      |       |       |            |          |       	|     1 |   27 |           |      |      |
+|*  6 |       TABLE ACCESS BY INDEX ROWID| TENTRY               |   316 | 17696 |   301   (0)| 00:00:01 |       	|     1 |   27 | 27(<0.1%) |      |      |
+|*  7 |        INDEX RANGE SCAN          | IENTRY_DEBITACCOUNT  |   329 |       |     5   (0)| 00:00:01 |       	|     1 |   28 | 1(<0.1%)  |      |      |
+|*  8 |     INDEX RANGE SCAN             | IDOCUMENTS_OPDATE    |     1 |       |     2   (0)| 00:00:01 |			|   175 |   4G | 4M(24%)   | 26%  | 32%  |
+|*  9 |    TABLE ACCESS BY INDEX ROWID   | TDOCUMENT            |     1 |    20 |     2   (0)| 00:00:01 |			|    4G |   18 | 12M(75%)  | 65%  | 67%  |
+---------------------------------------------------------------------------------------------------------			-----------------------------------------
+Peeked Binds (identified by position):
+--------------------------------------
+   1 - :B2 (NUMBER):  1
+   2 - :B1 (VARCHAR2(32)): 47427810155794004061
+   3 - :B2 (NUMBER): 1
+   4 - :B4 (DATE): 10/08/2021 00:00:00
+   5 - :B3 (DATE): 06/30/2022 00:00:00
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   5 - filter(:B3>=:B4)
+   6 - filter("B1"."VALUE"<>0)
+   7 - access("B1"."BRANCH"=:B2 AND "B1"."DEBITACCOUNT"=:B1)
+   8 - access("DOC"."BRANCH"=:B2 AND "DOC"."OPDATE">=:B4 AND "DOC"."OPDATE"<=:B3)
+   9 - filter(("DOC"."NEWDOCNO" IS NULL AND "DOC"."DOCNO"="SET0"."DOCNO"))
+-------------------------------------------------------------------------------------------------------
+| INDEX_NAME          | UNIQUENESS | COLUMNS        | LEAF_BLOCKS | DISTINCT_KEYS | CLUSTERING_FACTOR |
+-------------------------------------------------------------------------------------------------------
+| IDOCUMENTS_DOCNO    | UNIQUE     | RANCH, DOCNO   |     4407700 |    1302875250 |        1224961600 |
+| IDOCUMENTS_OPDATE   | NONUNIQUE  | BRANCH, OPDATE |     1313000 |          3774 |           8794850 |
+| IDOCUMENT_OBJECTUID | UNIQUE     | OBJECTUID      |     1681500 |    1237953850 |        1170696950 |
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+| INDEX_NAME              | UNIQUENESS | COLUMNS                      | LEAF_BLOCKS | DISTINCT_KEYS | CLUSTERING_FACTOR |
+-------------------------------------------------------------------------------------------------------------------------
+| IENTRY_DOCNO            | UNIQUE     | BRANCH, DOCNO, NO            |     9412150	|    2398632500 |        1301830300 |
+| IENTRY_DEBITACCOUNT     | NONUNIQUE  | BRANCH, DEBITACCOUNT, DOCNO  |    10263550 |     530913173 |        2131129200 |
+| IENTRY_CREDITACCOUNT    | NONUNIQUE  | BRANCH, CREDITACCOUNT, DOCNO |     9523750	|     530913173 |        2006511400 |
+| IENTRY_ENTRYGROUPID     | NONUNIQUE  | BRANCH, DOCNO, ENTRYGROUPID  |     9482950 |     530913173 |        1218031150 |
+| I_UBRR_ENTRY_BR_DOC_CR  | NONUNIQUE  | BRANCH, DOCNO, CREDITACCOUNT |    17212650 |     530913173 |        1278874650 |
+| I_UBRR_ENTRY_BR_DOC_DEB | NONUNIQUE  | BRANCH, DOCNO, DEBITACCOUNT  |    17201550 |     530913173 |        1271780250 |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+-------------------------------------
+INSERT /*+ APPEND */ INTO TRVPCASHECONTRACTITEM SELECT /*+ use_nl(ctin,ci,r1,a) leading(ctin) */ CI.NO, CASE WHEN CTIN.ITEMNAME IN 
+('CNAPRC1RUNRUN', 'ITEMPRC1','ITEMOVERPRC1','ITEMPRCCREDIT') THEN 28 WHEN CTIN.ITEMNAME IN ('ITEMPRCDELAY','CNAPRC1DEL') THEN 29 WHEN 
+CTIN.ITEMNAME IN ('ITEMCREDIT1','ITEMCREDIT2','CNARUNLOANC','ITEMCREDIT','ITEMOVERDRAFT2','ITEMOVERDRAFT', 'ITEMCREDIT3','ITEMCREDIT4','ITEMCRED
+IT5','ITEMCREDIT6') THEN 26 WHEN CTIN.ITEMNAME IN ('ITEMCREDITDELAY','CNADELLOANC','ITEMCRDDELAY') THEN 27 WHEN 
+CTIN.ITEMNAME IN ('ITEMCOMM','CNASERVICECOMMIS','ITEMCOMM43','ITEMCOMM41','CNASERVICECOMMIS43','CNASERVICECOMMIS41') THEN 37 WHEN CTIN.ITEMNAME 
+IN ('ITEMNOTUSECL') THEN 38 WHEN CTIN.ITEMNAME IN ('CNACLEAROTHER_31_CURR','ITEMDYNDEBTOTHER_4_CURR','ITEMDYNDEBTOTHER_12_CURR','ITEMDYNDEBTOTHER_20_CURR') 
+THEN 39 WHEN CTIN.ITEMNAME IN ('ITEMDYNSTATEFEE_7_CURR','ITEMDYNSTATEFEE_15_CURR','ITEMDYNSTATEFEE_23_CURR',
+'CNACLEARDUTY_28_CURR') THEN 40 END ITEMREFCODE, 0 ITEMCODE, A.ACCOUNTN
+ 
+Plan hash value: 1003587907
+ 
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                               | Name                   | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT                        |                        |       |       |    21M(100)|          |       |       |
+|   1 |  LOAD AS SELECT                         | TRVPCASHECONTRACTITEM  |       |       |            |          |       |       |
+|*  2 |   FILTER                                |                        |       |       |            |          |       |       |
+|   3 |    NESTED LOOPS                         |                        |       |       |            |          |       |       |
+|   4 |     NESTED LOOPS                        |                        |   264K|    36M|    21M  (1)| 00:27:49 |       |       |
+|   5 |      NESTED LOOPS                       |                        |   264K|    28M|    20M  (1)| 00:26:47 |       |       |
+|   6 |       NESTED LOOPS                      |                        |  6197K|   449M|  6328K  (1)| 00:08:15 |       |       |
+|*  7 |        TABLE ACCESS FULL                | TCONTRACTTYPEITEMNAME  |  1790K|    46M| 12741  (10)| 00:00:01 |       |       |
+|*  8 |        TABLE ACCESS BY INDEX ROWID      | TCONTRACTITEM          |     3 |   147 |   293   (0)| 00:00:01 |       |       |
+|*  9 |         INDEX RANGE SCAN                | TCONTRACTITEM_ITEMCODE |   718 |       |     2   (0)| 00:00:01 |       |       |
+|  10 |       PARTITION LIST SINGLE             |                        |     1 |    35 |     3   (0)| 00:00:01 |   KEY |   KEY |
+|* 11 |        TABLE ACCESS BY LOCAL INDEX ROWID| UBRR_ZAA_ACC_REST      |     1 |    35 |     3   (0)| 00:00:01 |   KEY |   KEY |
+|* 12 |         INDEX RANGE SCAN                | IU_UBRR_ZAA_ACC_REST   |     1 |       |     2   (0)| 00:00:01 |   KEY |   KEY |
+|* 13 |      INDEX UNIQUE SCAN                  | IACCOUNT_ACCOUNTNO     |     1 |       |     2   (0)| 00:00:01 |       |       |
+|  14 |     TABLE ACCESS BY INDEX ROWID         | TACCOUNT               |     1 |    33 |     3   (0)| 00:00:01 |       |       |
+|* 15 |    TABLE ACCESS BY INDEX ROWID          | UBRR_CONTRACT_CESS     |     1 |    21 |     5   (0)| 00:00:01 |       |       |
+|* 16 |     INDEX RANGE SCAN                    | I_UBRR_CONTR_CESS      |     2 |       |     3   (0)| 00:00:01 |       |       |
+----------------------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter((( IS NULL AND INTERNAL_FUNCTION("CTIN"."ITEMNAME")) OR ("CTIN"."ITEMNAME"<>'CNACLEAROTHER_31_CURR' AND 
+              "CTIN"."ITEMNAME"<>'ITEMDYNDEBTOTHER_4_CURR' AND "CTIN"."ITEMNAME"<>'ITEMDYNDEBTOTHER_12_CURR' AND 
+              "CTIN"."ITEMNAME"<>'ITEMDYNDEBTOTHER_20_CURR' AND "CTIN"."ITEMNAME"<>'CNAPRC1RUNRUN' AND "CTIN"."ITEMNAME"<>'ITEMPRC1' 
+              AND "CTIN"."ITEMNAME"<>'ITEMOVERPRC1' AND "CTIN"."ITEMNAME"<>'ITEMPRCCREDIT' AND "CTIN"."ITEMNAME"<>'ITEMPRCDELAY' AND 
+              "CTIN"."ITEMNAME"<>'CNAPRC1DEL')))
+   7 - filter(("CTIN"."BRANCH"=:B1 AND INTERNAL_FUNCTION("CTIN"."ITEMNAME")))
+   8 - filter("CI"."BRANCH"=:B1)
+   9 - access("CI"."ITEMCODE"="CTIN"."ITEMCODE" AND "CI"."ITEMTYPE"=1)
+  11 - filter("R1"."MRREST"<>0)
+  12 - access("R1"."CARSES"=:B2 AND "R1"."CARACC"="CI"."KEY")
+  13 - access("A"."BRANCH"=:B1 AND "A"."ACCOUNTNO"="CI"."KEY")
+  15 - filter("CC"."BRANCH"=:B1)
+  16 - access("CC"."CONTRACTNO"=:B1)
+  
+  
+  
+  
+  
+  
+  
+1. Говорили про селект и параллельную сессию, которая меняет данные из селекта. Вы сказали, что будут старые данные. 
+	За счет чего?
+	Как реализуется согласованное чтение?
+2. Аналитические функции sum()over() и + order by
+3. btree index - что значит b? Что есть сбалансированность?
+4. Что значит дорогие bitmap?
+
+5. Пути доступа к данным
+6. HJ одно проходный
+6. разница result cache и deterministic.
+7. Разница между NDS и DBMS_SQL

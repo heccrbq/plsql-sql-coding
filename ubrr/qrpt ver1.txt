@@ -1,0 +1,170 @@
+with 
+    --
+    function sql_cursor(p_sql_id in v$sqlarea.sql_id%type) return clob
+    is
+        l_result clob;
+    begin
+        select sql_fulltext
+        into l_result
+        from v$sqlarea where sql_id = p_sql_id;
+        
+--        select 
+--    parsing_schema_name, do.object_name || ' (line : ' || sa.program_line# || ')' source,
+--    module, action, last_active_time,
+--    plan_hash_value, child_number,
+--    optimizer_mode,
+--    executions, parse_calls, disk_reads, direct_reads, direct_writes, buffer_gets, rows_processed, 
+----    version_count, 
+--    elapsed_time/1e6, cpu_time/1e6, user_io_wait_time/1e6, concurrency_wait_time/1e6, plsql_exec_time/1e6, java_exec_time/1e6, 
+--    sql_profile, sa.sql_plan_baseline
+--from v$sql sa
+--    join dba_hist_sqlcommand_name scn using (command_type)
+--    left join dba_objects do on do.object_id = sa.program_id
+--where sql_id = '6pq2srwy9dqth'
+        
+        return '<p>' || l_result || '</p>';
+    end sql_cursor;
+    function sql_child_cursors(p_sql_id in v$sqlarea.sql_id%type) return clob
+    is
+        cursor cur$(p_sql_id in v$sqlarea.sql_id%type) is
+            select 
+    scn.command_name, do.object_name || ' (line : ' || sa.program_line# || ')' object_name,
+    sql_id, plan_hash_value, optimizer_mode, parsing_schema_name, module, action, last_active_time,
+    version_count, parse_calls, executions, disk_reads, direct_reads, direct_writes, buffer_gets, rows_processed, 
+    elapsed_time/1e6, cpu_time/1e6, user_io_wait_time/1e6, concurrency_wait_time/1e6, plsql_exec_time/1e6, java_exec_time/1e6, 
+    sql_profile, sa.sql_plan_baseline
+from v$sqlarea sa
+    join dba_hist_sqlcommand_name scn using (command_type)
+    left join dba_objects do on do.object_id = sa.program_id
+where sql_id = '6pq2srwy9dqth';
+        --
+        subtype tcur$ is cur$%rowtype;
+        type cur_list is table of tcur$;
+        l_cur    cur_list;
+        l_row    tcur$;
+        l_result clob;
+    begin
+        return null;
+    end sql_child_cursors;
+    --
+    function bind_variables(p_sql_id in v$sqlarea.sql_id%type) return clob
+    is
+        cursor cur$(p_sql_id in v$sqlarea.sql_id%type) is
+            select 
+                name, position, datatype_string, was_captured, last_captured, value_string,
+                child_address--, dense_rank()over(order by child_address) group_id
+            from v$sql_bind_capture 
+            where sql_id = p_sql_id
+            order by child_address, position;
+        --
+        subtype tcur$ is cur$%rowtype;
+        type cur_list is table of tcur$;
+        l_cur    cur_list;
+        l_row    tcur$;
+        l_result clob;
+    begin
+        open cur$(p_sql_id);
+            fetch cur$ bulk collect into l_cur;
+        close cur$;
+        
+        if l_cur.count = 0 then
+            l_result := '<p>no rows selected</p>';
+        else
+            l_result := '<details open>' ||
+                '<summary>BIND VARIABLES SECTION</summary>';
+            
+            for i in 1 .. l_cur.count
+            loop
+                -- header section
+                if l_cur(i).child_address <> l_row.child_address or l_row.child_address is null then
+                    -- if some section added need to close that section
+                    if l_cur(i).child_address <> l_row.child_address then
+                        l_result := l_result || '</tbody></table></details>';
+                    end if;
+                    
+                    l_result := l_result || 
+                        '<details>' ||
+                            '<summary>' || 'CHILD CURSOR ' || l_cur(i).child_address || '</summary>' ||
+                                '<table>' ||
+                                    '<thead>' ||
+                                        '<tr>' ||
+                                            '<th>Bind Name</th>'          ||
+                                            '<th>Position</th>'           ||
+                                            '<th>Bind Datatype</th>'      ||
+                                            '<th>Was Captured</th>'       ||
+                                            '<th>Last Captured Time</th>' ||
+                                            '<th>Bind Value</th>'         ||
+                                            '<th>Child Address</th>'      ||
+                                        '</tr>' ||
+                                    '</thead>' ||
+                                    '<tbody>';
+                end if;
+                l_row := l_cur(i);
+                
+                -- content section  
+                l_result := l_result || 
+                    '<tr>' || 
+                        '<td>' || l_cur(i).name            || '</td>' ||
+                        '<td>' || l_cur(i).position        || '</td>' ||
+                        '<td>' || l_cur(i).datatype_string || '</td>' ||
+                        '<td>' || l_cur(i).was_captured    || '</td>' ||
+                        '<td>' || l_cur(i).last_captured   || '</td>' ||
+                        '<td>' || l_cur(i).value_string    || '</td>' ||
+                        '<td>' || l_cur(i).child_address   || '</td>' ||
+                    '</tr>';                
+            end loop;
+            
+            l_result := l_result || '</tbody></table></details></details>';
+        end if;
+        
+        return l_result;
+    exception
+        when others then
+            if cur$%isopen then
+                close cur$;
+            end if;
+            -- 
+            raise;
+    end bind_variables;
+    --
+    function head(p_sql_id in v$sqlarea.sql_id%type) return clob
+    is
+        l_head clob := 
+            '<head>'                                                                ||
+                '<title>Query Report for SQL Statement ' || p_sql_id || '</title>'  ||
+                '<style type="text/css">' ||
+                '</style>' ||
+            '</head>';
+    begin
+        return l_head;
+    end head;
+    --
+    function body(p_sql_id in v$sqlarea.sql_id%type) return clob
+    is             
+    begin        
+        return 
+            '<body>' || 
+                sql_cursor(p_sql_id => p_sql_id)        ||
+                sql_child_cursors(p_sql_id => p_sql_id) ||
+                bind_variables(p_sql_id => p_sql_id)    ||
+            '</body>';
+    end body;
+    --
+    function qrpt(p_sql_id in v$sqlarea.sql_id%type) return clob 
+    is
+    begin
+        return 
+            '<html lang="en">' || 
+                head(p_sql_id => p_sql_id) ||
+                body(p_sql_id => p_sql_id) || 
+            '</html>';
+    end qrpt;
+
+/**
+ *
+ */
+source as (
+    select '6pq2srwy9dqth' sql_id from dual
+)
+select qrpt(p_sql_id => sql_id) from source;
+/
