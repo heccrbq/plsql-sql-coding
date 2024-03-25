@@ -1,0 +1,120 @@
+-- match_recognize
+
+-- все опции сразу
+with t as (select * from table(sys.odcinumberlist(1,2,2,3,1,4,5)))
+select mr.* from t
+match_recognize
+(
+    partition by mod(column_value,2)
+    order by column_value
+    measures
+        main.column_value as cv,
+        down.column_value as d_cv,
+        final last(down.column_value) as end_cv,
+        running count(1) as r_cnt,
+        final count(1) as f_cnt,
+        match_number() as match,
+        classifier() as cls
+    all rows per match | one row per match | all rows per match with unmatched rows
+    after match skip past last row | after match skip to last up
+    pattern(main down* up*) | pattern(main down+ up+) | pattern(main down+ up+|dummy+?)
+    define
+--        three as three.column_value < 53
+        down as down.column_value < prev(down.column_value),
+        up as up.column_value > prev(up.column_value)
+)mr ;
+
+
+
+
+-- 1
+with t as (select * from table(sys.odcinumberlist(1,2,3,4,5)))
+select * from t
+match_recognize
+(
+    all rows per match
+    pattern(three)
+    define
+        three as three.column_value < 3
+);
+
+-- 2
+with t as (select * from table(sys.odcinumberlist(1,2,3,4,5)))
+select * from t
+match_recognize
+(
+    measures
+        three.column_value as cv
+    all rows per match
+    pattern(three)
+    define
+        three as three.column_value < 3
+);
+
+-- 3
+with t as (select * from table(sys.odcinumberlist(1,2,3,4,5)))
+select * from t
+match_recognize
+(
+    measures
+        three.column_value as cv
+    all rows per match
+    pattern(three*)
+    define
+        three as three.column_value < 3
+);
+
+-- 4
+with t as (select * from table(sys.odcinumberlist(1,2,2,3,1,4,5)))
+select mr.* from t
+match_recognize
+(
+    measures
+        three.column_value as cv,
+        down.column_value as d_cv,
+        up.column_value as u_cv,
+        final last(down.column_value) as end_cv,
+        running count(1) as r_cnt,
+        final count(1) as f_cnt,
+        match_number() as match,
+        classifier() as cls
+    all rows per match
+    after match skip past last row
+    pattern(three down* up*)
+    define
+--        three as three.column_value < 53
+        down as down.column_value < prev(down.column_value),
+        up as up.column_value > prev(up.column_value)
+)mr ;
+
+
+-- 5
+select *
+from dropme
+  match_recognize (
+    order by id
+    measures case when sum(val) > 1 then 1 end as flag, v.id as v_id,
+            running count(1) as r_cnt,
+        final count(1) as f_cnt,
+        final last(v.id) as end_cv
+    all rows per match
+--    after match skip past last row
+    pattern (u v*)
+    define v as id = prev(id) + 1
+  );
+  
+  
+-- 6 leetcode
+with t as (select rownum rn,
+    column_value cv from table(sys.odcinumberlist(1,100,2,101,3,102,103,104,5)))
+select cv from t
+match_recognize(
+    order by rn
+    measures
+        final count(1) cnt
+    all rows per match
+    pattern(gt100*)
+    define
+        gt100 as gt100.cv >= 100
+)mr
+where mr.cnt >= 3

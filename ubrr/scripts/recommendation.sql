@@ -1,0 +1,1 @@
+buffer busy wait - исправляется добавлением freelist'ов или созданием reverse'ивного индекса

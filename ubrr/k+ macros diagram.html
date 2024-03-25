@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+      <meta charset="utf-8">
+      <title>Macros Usage Report</title>
+      <style>
+	  
+		details:hover {
+			background-color: #ddd;
+		}
+		details[open] {
+			background-color: transparent;
+		}		
+		details > summary {
+			list-style: none;
+		}
+		details > summary::-webkit-details-marker {
+			display: none;
+		}
+		details:nth-child(even) {
+			background-color: #eee;
+		}
+		
+		#execid {
+			margin-left: 50px;
+		}
+		
+		.table_cell {
+			display: table-cell;
+			padding: 5px;
+		}
+		.width_100 {
+			width: 100px;
+		}
+		.width_200 {
+			width: 200px;
+		}
+		.width_300 {
+			width: 300px;
+		}
+	</style>
+    </head>
+
+    <body>
+		<div id="macros" class="header">
+			<div>
+				<div  class="table_cell width_100">Branch</div>
+				<div  class="table_cell width_200">Code</div>
+				<div  class="table_cell width_300">Name</div>
+				<div  class="table_cell width_300">Progress</div>
+			</div>
+		
+			<div id="macros_1_923" class="row">
+				<details>
+					<summary>
+						<div>
+							<div  class="table_cell width_100">2</div>
+							<div  class="table_cell width_200">923</div>
+							<div  class="table_cell width_300">Депозитный_рвпс</div>
+						</div>
+					</summary>
+						<div id="execid"class="header">
+							<div>
+								<div  class="table_cell width_100">Opdate</div>
+								<div  class="table_cell width_200">ExecId</div>
+								<div  class="table_cell width_300">Time</div>
+								<div  class="table_cell width_300">Progress</div>
+							</div>
+						
+							<div id="execid_1_923_398428" class="row">
+								<details>
+									<summary>
+										<div>
+											<div  class="table_cell width_100">2</div>
+											<div  class="table_cell width_200">923</div>
+											<div  class="table_cell width_300">Депозитный_рвпс</div>
+											<div  class="table_cell width_300">
+												<progress max="100" value="10"/>
+											</div>
+										</div>
+									</summary>										
+								</details>
+							</div>
+							
+							<div id="execid_1_923_398428" class="row">
+								<details>
+									<summary>
+										<div>
+											<div  class="table_cell width_100">2</div>
+											<div  class="table_cell width_200">923</div>
+											<div  class="table_cell width_300">Депозитный_рвпс</div>
+											<div  class="table_cell width_300">
+												<progress max="100" value="83.25"/>
+											</div>
+										</div>
+									</summary>										
+								</details>
+							</div>
+						</div>
+				</details>
+			</div>
+		</div>
+		
+		<!--<table>
+			<tr>
+				<th>Branch</th>
+				<th>Code</th>
+				<th>Name</th>
+			</tr>
+			<tr>
+				<td>Branch</td>
+				<td>923</td>
+				<td>Депозитный_рвпс</td>
+			</tr>
+		</table>-->
+	
+        <!--<details>
+			<summary>click on me</summary>
+			<details>
+				<summary><progress max="100" value="80" alt="20%">20%</progress></summary>
+					<details>
+					<summary><progress max="100" value="10">20%</progress></summary>
+					</details>
+					<details>
+					<summary><progress max="100" value="20">20%</progress></summary>
+					</details>
+					<details>
+					<summary><progress max="100" value="30">20%</progress></summary>
+					</details>
+			</details>
+		</details>-->
+    </body>
+
+</html>

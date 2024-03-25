@@ -1,0 +1,284 @@
+"SQL Monitoring Report
+
+SQL Text
+------------------------------
+WITH CH_UPLEVEL AS ( SELECT /*+ no_merge cardinality(1000) */ TMP.BRANCH, TMP.NUMBERLIST, TMP.CODE FROM TREPGL152_UBRR_CHECK TMP WHERE TMP.BRANCH = :B7 AND TMP.NUMBERLIST IN (:B6 , :B5 , :B4 , :B3 , :B2 , :B1 ) AND TMP.CHECKED = '1' ) SELECT /*+ all_rows ORDERED sull(tab) use_nl(c) use_hash(BP) use_hash(BP1) use_hash(t) use_hash(RECP) use_hash(CH1,CH2,CH3,CH4,CH5) */ TAB.*, T.BRANCHPART, NVL(NVL(T.REGION_CODE ,BP.REGION ),:B18 ) REGION_TERM, NVL(T.IDENT, ' ') IDENT, DECODE(SUBSTR(TAB.TERM,1,1),
+'6', 1, 0) IS_INET, DECODE(INSTR(:B22 , '~'||TAB.DEVICE||TAB.ENTCODE||'~'), 0, 0, 1) IS_CASHOUT, DECODE(INSTR(:B21 , '~'||TO_CHAR(TAB.DEBITENTCODE)||'~'), 0, 0, DECODE(TAB.KKVALUE, 0,1, DECODE(TO_CHAR(:B7 )||':'||TAB.CORRACCOUNT, '2:30233810935620000045',0, '1:30233810252220000015',0, 1 ) ) ) IS_CASHIN, DECODE(INSTR(:B20 , '~'||TAB.DEVICE||TAB.ENTCODE||'~'), 0, 0, 1) IS_P2PDEBIT, DECODE(INSTR(:B19 , '~'||TAB.DEVICE||TAB.ENTCODE||'~'), 0, 0, 1) IS_P2PCREDIT, :B17 ACQNSPK, :B16 ACQREGNO, :B15
+ACQNKO, SUBSTR(RECP.PREFIX, 1, 8) PREFIX, DECODE(CH1.CODE, 1, 1, 0) IS_OURACQ, C.BRANCHPART CARDBPART, NVL(BP1.REGION, :B18 ) CARDREGION FROM (SELECT /*+ ORDERED full(tmp) use_hash(ch) use_hash(ch3) use_hash(ch4) use_hash(re) use_nl(e,e1,a,cp,a1,cp1,a2,cp2) index(re ireferenceentry_ident) */ :B17 AS NSPK, :B16 AS REGNO, :B15 AS NKO, COALESCE(TMP.CURRENCY, :B12 ) AS PLCURR, A.BRANCHPART ACCOUNTBP, A.ACCOUNTNO, TMP.OPDATE DOPDATE, DECODE(TMP.ACQCOUNTRY, NULL,1, :B14 ,1, 2) COUNTRY,
+DECODE(TMP.ISSCOUNTRY, NULL,1, :B14 ,1, 2) ISSCOUNTRY, TMP.DEVICE DEVICE, COALESCE(TMP.ISSCODE, :B11 ) ISSCODE, DECODE(TMP.FICODE, NULL,1, :B11 ,1, 2) FICODE, COALESCE(TMP.FICODE, :B11 ) NFICODE, TMP.TERM TERM, TMP.PAN PAN, TMP.MBR MBR, UPPER(RE.IDENT) ENTRYIDENT, TMP.VALUE AS DVALUE, 0 KVALUE, 1 KDVALUE, 0 KKVALUE, TMP.VALUE AS RDVALUE, 0 RKVALUE, E.DOCNO, E.VALUEDATE, E.DEBITENTCODE, TMP.ENTCODE ENTCODE, TMP.SICCODE MCC, TMP.ENTTYPE ENTTYPE, TMP.TRANCODE TRANCODE, TMP.APPROVAL APPROVAL,
+COALESCE(TMP.ISSCOUNTRY, :B14 ) ISSCOUNTRYCODE, COALESCE(TMP.ACQCOUNTRY, :B14 ) ACQCOUNTRYCODE, A2.ACCOUNTNO CORRACCOUNT, COALESCE(E1.DEBITACCOUNT,:B13 ) E1ACCOUNT, COALESCE(TMP.CURRENCY,TMP.ORGCURRENCY,:B12 ) RCURR, TMP.POSCONDITION POSCONDITION, DECODE(CP2.BRANCH, :B7 , 1, DECODE(CH4.BRANCH, :B7 , 1, DECODE(SIGN(INSTR(:B10 ,'+'||TRIM(A2.ACCOUNTNO)||'+')), 1, 1, DECODE(SIGN(INSTR(:B9 ,'+'||TRIM(A2.ACCOUNTNO)||'+')), 1, 1, 0 ) ) ) ) CORR_IS_CLIENT, DECODE(SIGN(INSTR(:B10
+,'+'||TRIM(A.ACCOUNTNO)||'+')), 1, 1, DECODE(SIGN(INSTR(:B9 ,'+'||TRIM(A.ACCOUNTNO)||'+')), 1, 1, 0 ) ) ACC1_IS_TRANSIT, A2.CURRENCYNO CURRFROM FROM UBRR_TREPGL152DOCUMENT TMP, CH_UPLEVEL CH, TENTRY E, TENTRY E1, TREFERENCEENTRY RE, TACCOUNT A, CH_UPLEVEL CH3, TCLIENTPERSONE CP, TACCOUNT A1, TCLIENTPERSONE CP1, TACCOUNT A2, TCLIENTPERSONE CP2, CH_UPLEVEL CH4 WHERE TMP.BRANCH = :B7 AND TMP.DEVICE IN ('A','B','P','V','I','M','F') AND CH.NUMBERLIST= :B6 AND CH.CODE = TO_CHAR(COALESCE(TMP.ISSCODE,
+:B11 )) AND E.BRANCH = TMP.BRANCH AND E.DOCNO = TMP.DOCNO AND E.VALUE <> 0 AND RE.BRANCH = :B7 AND RE.CODE = E.DEBITENTCODE AND RE.IDENT LIKE 'OPEXT_%' AND A.BRANCH = E.BRANCH AND A.ACCOUNTNO = E.DEBITACCOUNT AND CH3.NUMBERLIST(+)= :B5 AND CH3.CODE (+)= TO_CHAR(A.NOPLAN) AND CP.BRANCH(+) = A.BRANCH AND CP.IDCLIENT(+) = A.IDCLIENT AND A1.BRANCH = E.BRANCH AND A1.ACCOUNTNO = E.CREDITACCOUNT AND CP1.BRANCH(+) = A1.BRANCH AND CP1.IDCLIENT(+) = A1.IDCLIENT AND ( (CP.BRANCH IS NOT NULL) OR (CP.BRANCH
+IS NULL AND CP1.BRANCH IS NULL AND CH3.BRANCH IS NOT NULL) OR ( CP1.BRANCH IS NULL AND NVL(TMP.ISSCODE, :B11 ) != :B11 AND (INSTR(:B10 , '+'||E.DEBITACCOUNT||'+') <> 0 OR INSTR(:B9 , '+'||E.DEBITACCOUNT||'+') <> 0) AND ( (INSTR(:B10 , '+'||E.CREDITACCOUNT||'+') = 0 AND INSTR(:B9 , '+'||E.CREDITACCOUNT||'+') = 0) OR ( TMP.ENTTYPE = 'R' OR INSTR(:B8 , '+'||TO_CHAR(E.DEBITENTCODE)||'+') = 0 ) ) ) ) AND E1.BRANCH(+) = E.BRANCH AND E1.DOCNO(+) = E.DOCNO AND E1.NO(+) <> E.NO AND
+ABS(NVL(E1.NO,E.NO+1)-E.NO) = 1 AND E1.DEBITENTCODE(+) = E.DEBITENTCODE AND E1.DEBITACCOUNT(+) NOT IN ('61306810833000008060', '47407810733000009040') AND E1.CREDITACCOUNT(+) NOT IN ('61306810833000008060', '47407810733000009040') AND A2.BRANCH = E.BRANCH AND A2.ACCOUNTNO = COALESCE(E1.CREDITACCOUNT, E.CREDITACCOUNT) AND CP2.BRANCH (+)= A2.BRANCH AND CP2.IDCLIENT (+)= A2.IDCLIENT AND CH4.NUMBERLIST (+)= :B5 AND CH4.CODE (+)= TO_CHAR(A2.NOPLAN) UNION ALL SELECT /*+ ORDERED full(tmp) use_hash(ch)
+use_hash(ch3) use_hash(ch4) use_hash(re) use_nl(e,e1,a,cp,a1,cp1,a2,cp2) index(re ireferenceentry_ident) */ :B17 AS NSPK, :B16 AS REGNO, :B15 AS NKO, COALESCE(TMP.CURRENCY, :B12 ) AS PLCURR, A.BRANCHPART ACCOUNTBP, A.ACCOUNTNO, TMP.OPDATE DOPDATE, DECODE(TMP.ACQCOUNTRY, NULL,1, :B14 ,1, 2) COUNTRY, DECODE(TMP.ISSCOUNTRY, NULL,1, :B14 ,1, 2) ISSCOUNTRY, TMP.DEVICE DEVICE, COALESCE(TMP.ISSCODE, :B11 ) ISSCODE, DECODE(TMP.FICODE, NULL,1, :B11 ,1, 2) FICODE, COALESCE(TMP.FICODE, :B11 ) NFICODE,
+TMP.TERM TERM, TMP.PAN PAN, TMP.MBR MBR, UPPER(RE.IDENT) ENTRYIDENT, 0 AS DVALUE, TMP.VALUE KVALUE, 0 KDVALUE, 1 KKVALUE, 0 AS RDVALUE, TMP.VALUE RKVALUE, E.DOCNO, E.VALUEDATE, E.DEBITENTCODE, TMP.ENTCODE ENTCODE, TMP.SICCODE MCC, TMP.ENTTYPE ENTTYPE, TMP.TRANCODE TRANCODE, TMP.APPROVAL APPROVAL, COALESCE(TMP.ISSCOUNTRY, :B14 ) ISSCOUNTRYCODE, COALESCE(TMP.ACQCOUNTRY, :B14 ) ACQCOUNTRYCODE, A2.ACCOUNTNO CORRACCOUNT, COALESCE(E1.DEBITACCOUNT,:B13 ) E1ACCOUNT,
+COALESCE(TMP.CURRENCY,TMP.ORGCURRENCY,:B12 ) RCURR, TMP.POSCONDITION POSCONDITION, DECODE(CP2.BRANCH, :B7 , 1, DECODE(CH4.BRANCH, :B7 , 1, DECODE(SIGN(INSTR(:B10 ,'+'||TRIM(A2.ACCOUNTNO)||'+')), 1, 1, DECODE(SIGN(INSTR(:B9 ,'+'||TRIM(A2.ACCOUNTNO)||'+')), 1, 1, 0 ) ) ) ) CORR_IS_CLIENT, DECODE(SIGN(INSTR(:B10 ,'+'||TRIM(A.ACCOUNTNO)||'+')), 1, 1, DECODE(SIGN(INSTR(:B9 ,'+'||TRIM(A.ACCOUNTNO)||'+')), 1, 1, 0 ) ) ACC1_IS_TRANSIT, A2.CURRENCYNO CURRFROM FROM UBRR_TREPGL152DOCUMENT TMP, CH_UPLEVEL
+CH, TENTRY E, TENTRY E1, TREFERENCEENTRY RE, TACCOUNT A, CH_UPLEVEL CH3, TCLIENTPERSONE CP, TACCOUNT A1, TCLIENTPERSONE CP1, TACCOUNT A2, TCLIENTPERSONE CP2, CH_UPLEVEL CH4 WHERE TMP.BRANCH = :B7 AND TMP.DEVICE IN ('A','B','P','V','I','M','F') AND CH.NUMBERLIST= :B6 AND CH.CODE = TO_CHAR(COALESCE(TMP.ISSCODE, :B11 )) AND E.BRANCH = TMP.BRANCH AND E.DOCNO = TMP.DOCNO AND E.VALUE <> 0 AND RE.BRANCH = :B7 AND RE.CODE = E.DEBITENTCODE AND RE.IDENT LIKE 'OPEXT_%' AND A.BRANCH = E.BRANCH AND
+A.ACCOUNTNO = E.CREDITACCOUNT AND CH3.NUMBERLIST(+)= :B5 AND CH3.CODE (+)= TO_CHAR(A.NOPLAN) AND CP.BRANCH(+) = A.BRANCH AND CP.IDCLIENT(+) = A.IDCLIENT AND A1.BRANCH = E.BRANCH AND A1.ACCOUNTNO = E.DEBITACCOUNT AND CP1.BRANCH(+) = A1.BRANCH AND CP1.IDCLIENT(+) = A1.IDCLIENT AND ( (CP.BRANCH IS NOT NULL) OR (CP.BRANCH IS NULL AND CP1.BRANCH IS NULL AND CH3.BRANCH IS NOT NULL) OR ( CP1.BRANCH IS NULL AND NVL(TMP.ISSCODE, :B11 ) != :B11 AND (INSTR(:B10 , '+'||E.CREDITACCOUNT||'+') <> 0 OR
+INSTR(:B9 , '+'||E.CREDITACCOUNT||'+') <> 0) AND ( (INSTR(:B10 , '+'||E.DEBITACCOUNT||'+') = 0 AND INSTR(:B9 , '+'||E.DEBITACCOUNT||'+') = 0) OR ( TMP.ENTTYPE = 'R' OR INSTR(:B8 , '+'||TO_CHAR(E.DEBITENTCODE)||'+') = 0 ) ) ) ) AND E1.BRANCH(+) = E.BRANCH AND E1.DOCNO(+) = E.DOCNO AND E1.NO(+) <> E.NO AND ABS(NVL(E1.NO,E.NO+1)-E.NO) = 1 AND E1.DEBITENTCODE(+) = E.DEBITENTCODE AND E1.DEBITACCOUNT(+) NOT IN ('61306810833000008060', '47407810733000009040') AND E1.CREDITACCOUNT(+) NOT IN
+('61306810833000008060', '47407810733000009040') AND A2.BRANCH = E.BRANCH AND A2.ACCOUNTNO = COALESCE(E1.DEBITACCOUNT, E.DEBITACCOUNT) AND CP2.BRANCH (+)= A2.BRANCH AND CP2.IDCLIENT (+)= A2.IDCLIENT AND CH4.NUMBERLIST(+)= :B5 AND CH4.CODE (+)= TO_CHAR(A2.NOPLAN) ) TAB, CH_UPLEVEL CH1, CH_UPLEVEL CH2, TCARD C, TBRANCHPART BP1, CH_UPLEVEL CH3, CH_UPLEVEL CH4, TREFERENCECARDPRODUCT RECP, TREFERENCETERMINAL T, TBRANCHPART BP, CH_UPLEVEL CH5 WHERE CH1.NUMBERLIST(+)= :B6 AND CH1.CODE (+)=
+TO_CHAR(TAB.NFICODE) AND CH2.NUMBERLIST(+)= :B4 AND CH2.CODE (+)= TO_CHAR(TAB.NFICODE) AND COALESCE(CH1.BRANCH, CH2.BRANCH) IS NOT NULL AND C.BRANCH (+)= :B7 AND C.PAN (+)= TAB.PAN AND C.MBR (+)= TAB.MBR AND BP1.BRANCH (+) = C.BRANCH AND BP1.BRANCHPART(+) = C.BRANCHPART AND CH3.NUMBERLIST(+)= :B3 AND CH3.CODE (+)= TO_CHAR(C.CARDPRODUCT) AND (C.BRANCH IS NULL OR CH3.BRANCH IS NOT NULL) AND CH4.NUMBERLIST(+)= :B2 AND CH4.CODE (+)= TO_CHAR(C.BRANCHPART) AND RECP.BRANCH (+)= C.BRANCH AND RECP.CODE
+(+)= C.CARDPRODUCT AND T.BRANCH(+) = :B7 AND T.FICODE(+) = TAB.NFICODE AND T.CODE (+) = TAB.TERM AND BP.BRANCH(+) = T.BRANCH AND BP.BRANCHPART(+) = T.BRANCHPART AND CH5.NUMBERLIST(+)= :B1 AND CH5.CODE (+)= T.CODE AND CH5.BRANCH IS NULL ORDER BY 1, 2
+
+Global Information
+------------------------------
+ Status                                 :  DONE (ALL ROWS)                             
+ Instance ID                            :  1                                           
+ Session                                :  VTORUSHINA (612:54595)                      
+ SQL ID                                 :  84y0dbs9znncx                               
+ SQL Execution ID                       :  16782301                                    
+ Execution Started                      :  10/12/2022 11:59:05                         
+ First Refresh Time                     :  10/12/2022 11:59:08                         
+ Last Refresh Time                      :  10/12/2022 11:59:17                         
+ Duration                               :  12s                                         
+ Module/Action                          :  cpi2@itp-cpi-test.lan.ubrr.ru (TNS V1-V3)/- 
+ Service                                :  ltwr1                                       
+ Program                                :  cpi2@itp-cpi-test.lan.ubrr.ru (TNS V1-V3)   
+ PLSQL Entry Ids (Object/Subprogram)    :  110705,5                                    
+ PLSQL Current Ids (Object/Subprogram)  :  14851277,1                                  
+ Fetch Calls                            :  99                                          
+
+Binds
+========================================================================================================================
+| Name | Position |      Type      |                                       Value                                       |
+========================================================================================================================
+| :B7  |        1 | NUMBER         | 1                                                                                 |
+| :B6  |        2 | NUMBER         | 2                                                                                 |
+| :B5  |        3 | NUMBER         | 3                                                                                 |
+| :B4  |        4 | NUMBER         | 1                                                                                 |
+| :B3  |        5 | NUMBER         | 12                                                                                |
+| :B2  |        6 | NUMBER         | 4                                                                                 |
+| :B1  |        7 | NUMBER         | 22                                                                                |
+| :B7  |       37 | NUMBER         | 1                                                                                 |
+| :B6  |       38 | NUMBER         | 2                                                                                 |
+| :B11 |       39 | NUMBER         | 1                                                                                 |
+| :B7  |       40 | NUMBER         | 1                                                                                 |
+| :B5  |       41 | NUMBER         | 3                                                                                 |
+| :B11 |       42 | NUMBER         | 1                                                                                 |
+| :B11 |       43 | NUMBER         | 1                                                                                 |
+| :B10 |       44 | VARCHAR2(2000) | +30110978723010000052+47423810315010000127+30233810352220000083+30233840652223000 |
+|      |          |                | 093+47422840615010000092+30232978252221000083+30109840350130000101+30233840015010 |
+|      |          |                | 006300+30233810252220000099+30233840352222000093+47422978215010000092+30232840352 |
+|      |          |                | 220000083+30232840052222000093+30232810152220000093+30232978352220000094+30232840 |
+|      |          |                | 752221000093+47423978215010000091+47423810815010000766+30233978452220000090+30233 |
+|      |          |                | 810052220000053+30232810552220001003+30232810974100014141+47423810615010000128+30 |
+|      |          |                | 233810852220001003+47423978515010000092+47423840115010000766+30233840952221000083 |
+|      |          |                | +30233840052220000094+47422978915010000091+30232840715010006300+47422840815010000 |
+|      |          |                | 766+30232810652220000043+30232810052220000083+30232840352223000103+30102810500000 |
+|      |          |                | 000995+47423840615010000127+30109810050130000101+47423840915010000092+30233810274 |
+|      |          |                | 100014141+30233810715010006300+30233840852220000090+30233810152220001004+30233978 |
+|      |          |                | 952222000093+47422840315010000091+47422810515010000041+30232810952220000099+30232 |
+|      |          |                | 978952223000093+30232810852220001004+30232840952224000094+30232978652222000093+30 |
+|      |          |                | 102840000000000000+30233978252223000093+47422810415010000756+30232810752220000053 |
+|      |          |                | +30101810500000000766+30233810952220000043+30233978552224000103+30232810415010006 |
+|      |          |                | 300+30232978252224000103+30109978950130000101+47423840615010000091+30233978552221 |
+|      |          |                | 000083+47423810815010000041+30233810452220000093+30233840952224000103+30233978652 |
+|      |          |                | 220000094+30232840552220000090+                                                   |
+| :B9  |       45 | VARCHAR2(32)   | +                                                                                 |
+| :B10 |       46 | VARCHAR2(2000) | +30110978723010000052+47423810315010000127+30233810352220000083+30233840652223000 |
+|      |          |                | 093+47422840615010000092+30232978252221000083+30109840350130000101+30233840015010 |
+|      |          |                | 006300+30233810252220000099+30233840352222000093+47422978215010000092+30232840352 |
+|      |          |                | 220000083+30232840052222000093+30232810152220000093+30232978352220000094+30232840 |
+|      |          |                | 752221000093+47423978215010000091+47423810815010000766+30233978452220000090+30233 |
+|      |          |                | 810052220000053+30232810552220001003+30232810974100014141+47423810615010000128+30 |
+|      |          |                | 233810852220001003+47423978515010000092+47423840115010000766+30233840952221000083 |
+|      |          |                | +30233840052220000094+47422978915010000091+30232840715010006300+47422840815010000 |
+|      |          |                | 766+30232810652220000043+30232810052220000083+30232840352223000103+30102810500000 |
+|      |          |                | 000995+47423840615010000127+30109810050130000101+47423840915010000092+30233810274 |
+|      |          |                | 100014141+30233810715010006300+30233840852220000090+30233810152220001004+30233978 |
+|      |          |                | 952222000093+47422840315010000091+47422810515010000041+30232810952220000099+30232 |
+|      |          |                | 978952223000093+30232810852220001004+30232840952224000094+30232978652222000093+30 |
+|      |          |                | 102840000000000000+30233978252223000093+47422810415010000756+30232810752220000053 |
+|      |          |                | +30101810500000000766+30233810952220000043+30233978552224000103+30232810415010006 |
+|      |          |                | 300+30232978252224000103+30109978950130000101+47423840615010000091+30233978552221 |
+|      |          |                | 000083+47423810815010000041+30233810452220000093+30233840952224000103+30233978652 |
+|      |          |                | 220000094+30232840552220000090+                                                   |
+| :B9  |       47 | VARCHAR2(32)   | +                                                                                 |
+| :B8  |       48 | VARCHAR2(32)   | +30+39+43+51+55+819+60+469+63+                                                    |
+| :B5  |       49 | NUMBER         | 3                                                                                 |
+| :B7  |       69 | NUMBER         | 1                                                                                 |
+| :B6  |       70 | NUMBER         | 2                                                                                 |
+| :B11 |       71 | NUMBER         | 1                                                                                 |
+| :B7  |       72 | NUMBER         | 1                                                                                 |
+| :B5  |       73 | NUMBER         | 3                                                                                 |
+| :B11 |       74 | NUMBER         | 1                                                                                 |
+| :B11 |       75 | NUMBER         | 1                                                                                 |
+| :B10 |       76 | VARCHAR2(2000) | +30110978723010000052+47423810315010000127+30233810352220000083+30233840652223000 |
+|      |          |                | 093+47422840615010000092+30232978252221000083+30109840350130000101+30233840015010 |
+|      |          |                | 006300+30233810252220000099+30233840352222000093+47422978215010000092+30232840352 |
+|      |          |                | 220000083+30232840052222000093+30232810152220000093+30232978352220000094+30232840 |
+|      |          |                | 752221000093+47423978215010000091+47423810815010000766+30233978452220000090+30233 |
+|      |          |                | 810052220000053+30232810552220001003+30232810974100014141+47423810615010000128+30 |
+|      |          |                | 233810852220001003+47423978515010000092+47423840115010000766+30233840952221000083 |
+|      |          |                | +30233840052220000094+47422978915010000091+30232840715010006300+47422840815010000 |
+|      |          |                | 766+30232810652220000043+30232810052220000083+30232840352223000103+30102810500000 |
+|      |          |                | 000995+47423840615010000127+30109810050130000101+47423840915010000092+30233810274 |
+|      |          |                | 100014141+30233810715010006300+30233840852220000090+30233810152220001004+30233978 |
+|      |          |                | 952222000093+47422840315010000091+47422810515010000041+30232810952220000099+30232 |
+|      |          |                | 978952223000093+30232810852220001004+30232840952224000094+30232978652222000093+30 |
+|      |          |                | 102840000000000000+30233978252223000093+47422810415010000756+30232810752220000053 |
+|      |          |                | +30101810500000000766+30233810952220000043+30233978552224000103+30232810415010006 |
+|      |          |                | 300+30232978252224000103+30109978950130000101+47423840615010000091+30233978552221 |
+|      |          |                | 000083+47423810815010000041+30233810452220000093+30233840952224000103+30233978652 |
+|      |          |                | 220000094+30232840552220000090+                                                   |
+| :B9  |       77 | VARCHAR2(32)   | +                                                                                 |
+| :B10 |       78 | VARCHAR2(2000) | +30110978723010000052+47423810315010000127+30233810352220000083+30233840652223000 |
+|      |          |                | 093+47422840615010000092+30232978252221000083+30109840350130000101+30233840015010 |
+|      |          |                | 006300+30233810252220000099+30233840352222000093+47422978215010000092+30232840352 |
+|      |          |                | 220000083+30232840052222000093+30232810152220000093+30232978352220000094+30232840 |
+|      |          |                | 752221000093+47423978215010000091+47423810815010000766+30233978452220000090+30233 |
+|      |          |                | 810052220000053+30232810552220001003+30232810974100014141+47423810615010000128+30 |
+|      |          |                | 233810852220001003+47423978515010000092+47423840115010000766+30233840952221000083 |
+|      |          |                | +30233840052220000094+47422978915010000091+30232840715010006300+47422840815010000 |
+|      |          |                | 766+30232810652220000043+30232810052220000083+30232840352223000103+30102810500000 |
+|      |          |                | 000995+47423840615010000127+30109810050130000101+47423840915010000092+30233810274 |
+|      |          |                | 100014141+30233810715010006300+30233840852220000090+30233810152220001004+30233978 |
+|      |          |                | 952222000093+47422840315010000091+47422810515010000041+30232810952220000099+30232 |
+|      |          |                | 978952223000093+30232810852220001004+30232840952224000094+30232978652222000093+30 |
+|      |          |                | 102840000000000000+30233978252223000093+47422810415010000756+30232810752220000053 |
+|      |          |                | +30101810500000000766+30233810952220000043+30233978552224000103+30232810415010006 |
+|      |          |                | 300+30232978252224000103+30109978950130000101+47423840615010000091+30233978552221 |
+|      |          |                | 000083+47423810815010000041+30233810452220000093+30233840952224000103+30233978652 |
+|      |          |                | 220000094+30232840552220000090+                                                   |
+| :B9  |       79 | VARCHAR2(32)   | +                                                                                 |
+| :B8  |       80 | VARCHAR2(32)   | +30+39+43+51+55+819+60+469+63+                                                    |
+| :B5  |       81 | NUMBER         | 3                                                                                 |
+| :B6  |       82 | NUMBER         | 2                                                                                 |
+| :B4  |       83 | NUMBER         | 1                                                                                 |
+| :B7  |       84 | NUMBER         | 1                                                                                 |
+| :B3  |       85 | NUMBER         | 12                                                                                |
+| :B2  |       86 | NUMBER         | 4                                                                                 |
+| :B7  |       87 | NUMBER         | 1                                                                                 |
+| :B1  |       88 | NUMBER         | 22                                                                                |
+========================================================================================================================
+
+Global Stats
+===========================================================================
+| Elapsed |   Cpu   |    IO    |  Other   | Fetch | Buffer | Read | Read  |
+| Time(s) | Time(s) | Waits(s) | Waits(s) | Calls |  Gets  | Reqs | Bytes |
+===========================================================================
+|    3.60 |    0.63 |     1.25 |     1.72 |    99 |   233K | 1647 |  26MB |
+===========================================================================
+
+SQL Plan Monitoring Details (Plan Hash Value=2140001301)
+=====================================================================================================================================================================================================================================
+| Id  |                               Operation                                |            Name             |  Rows   | Cost |   Time    | Start  | Execs |   Rows   | Read | Read  |  Mem  | Activity |      Activity Detail      |
+|     |                                                                        |                             | (Estim) |      | Active(s) | Active |       | (Actual) | Reqs | Bytes | (Max) |   (%)    |        (# samples)        |
+=====================================================================================================================================================================================================================================
+|   0 | SELECT STATEMENT                                                       |                             |         |      |         9 |     +4 |     1 |     9819 |      |       |     . |          |                           |
+|   1 |   TEMP TABLE TRANSFORMATION                                            |                             |         |      |         9 |     +4 |     1 |     9819 |      |       |     . |          |                           |
+|   2 |    LOAD AS SELECT (CURSOR DURATION MEMORY)                             | SYS_TEMP_0FD9D78F9_DCC14611 |         |      |         1 |     +3 |     1 |        1 |      |       | 21504 |          |                           |
+|   3 |     INLIST ITERATOR                                                    |                             |         |      |         1 |     +3 |     1 |     1466 |      |       |     . |          |                           |
+|   4 |      INDEX RANGE SCAN                                                  | IREPGL152_UBRR_CHECK        |   20883 |  340 |         1 |     +3 |     6 |     1466 |      |       |     . |          |                           |
+|   5 |    SORT ORDER BY                                                       |                             |       1 | 7001 |         9 |     +4 |     1 |     9819 |      |       |   3MB |          |                           |
+|   6 |     FILTER                                                             |                             |         |      |         1 |     +4 |     1 |     9819 |      |       |     . |          |                           |
+|   7 |      HASH JOIN RIGHT OUTER                                             |                             |       1 | 7000 |         1 |     +4 |     1 |     9819 |      |       | 534KB |          |                           |
+|   8 |       VIEW                                                             |                             |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|   9 |        TABLE ACCESS FULL                                               | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|  10 |       HASH JOIN RIGHT OUTER                                            |                             |     184 | 6997 |         2 |     +3 |     1 |     9819 |      |       |   2MB |          |                           |
+|  11 |        TABLE ACCESS FULL                                               | TBRANCHPART                 |    1412 |    9 |         1 |     +3 |     1 |     1412 |      |       |     . |          |                           |
+|  12 |        HASH JOIN OUTER                                                 |                             |     184 | 6988 |         1 |     +4 |     1 |     9819 |      |       |   5MB |          |                           |
+|  13 |         NESTED LOOPS OUTER                                             |                             |     184 | 6988 |         1 |     +4 |     1 |     9819 |      |       |     . |          |                           |
+|  14 |          STATISTICS COLLECTOR                                          |                             |         |      |         1 |     +4 |     1 |        0 |      |       |     . |          |                           |
+|  15 |           HASH JOIN RIGHT OUTER                                        |                             |     184 | 6804 |         2 |     +3 |     1 |     9819 |      |       |   2MB |          |                           |
+|  16 |            TABLE ACCESS FULL                                           | TREFERENCECARDPRODUCT       |    1610 |   12 |         1 |     +3 |     1 |     1610 |      |       |     . |          |                           |
+|  17 |            HASH JOIN RIGHT OUTER                                       |                             |     184 | 6792 |         2 |     +3 |     1 |     9819 |      |       |   2MB |          |                           |
+|  18 |             VIEW                                                       |                             |    1000 |    3 |         1 |     +3 |     1 |     1334 |      |       |     . |          |                           |
+|  19 |              TABLE ACCESS FULL                                         | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|  20 |             FILTER                                                     |                             |         |      |         1 |     +4 |     1 |     9819 |      |       |     . |          |                           |
+|  21 |              HASH JOIN OUTER                                           |                             |     184 | 6789 |         2 |     +4 |     1 |     9819 |      |       |   6MB |     8.33 | Cpu (1)                   |
+|  22 |               HASH JOIN RIGHT OUTER                                    |                             |     184 | 6786 |         2 |     +3 |     1 |     9819 |      |       |   2MB |          |                           |
+|  23 |                TABLE ACCESS FULL                                       | TBRANCHPART                 |    1412 |    9 |         1 |     +3 |     1 |     1412 |      |       |     . |          |                           |
+|  24 |                NESTED LOOPS OUTER                                      |                             |     184 | 6777 |         1 |     +4 |     1 |     9819 |      |       |     . |          |                           |
+|  25 |                 FILTER                                                 |                             |         |      |         1 |     +4 |     1 |     9819 |      |       |     . |          |                           |
+|  26 |                  HASH JOIN OUTER                                       |                             |     184 | 6496 |         1 |     +4 |     1 |     9819 |      |       |   4MB |          |                           |
+|  27 |                   HASH JOIN OUTER                                      |                             |     184 | 6493 |         2 |     +3 |     1 |     9819 |      |       |   4MB |          |                           |
+|  28 |                    VIEW                                                |                             |     184 | 6490 |         2 |     +3 |     1 |     9819 |      |       |     . |          |                           |
+|  29 |                     UNION-ALL                                          |                             |         |      |         2 |     +3 |     1 |     9819 |      |       |     . |          |                           |
+|  30 |                      HASH JOIN OUTER                                   |                             |      92 | 3247 |         1 |     +3 |     1 |     9138 |      |       |   6MB |          |                           |
+|  31 |                       NESTED LOOPS OUTER                               |                             |      92 | 3244 |         1 |     +3 |     1 |     9138 |      |       |     . |          |                           |
+|  32 |                        NESTED LOOPS                                    |                             |      92 | 3152 |         1 |     +3 |     1 |     9138 |      |       |     . |          |                           |
+|  33 |                         FILTER                                         |                             |         |      |         1 |     +3 |     1 |     9138 |      |       |     . |          |                           |
+|  34 |                          NESTED LOOPS OUTER                            |                             |      98 | 2858 |         1 |     +3 |     1 |     9841 |      |       |     . |          |                           |
+|  35 |                           NESTED LOOPS                                 |                             |      98 | 2760 |         1 |     +3 |     1 |     9841 |      |       |     . |          |                           |
+|  36 |                            NESTED LOOPS OUTER                          |                             |     102 | 2454 |         1 |     +3 |     1 |     9841 |      |       |     . |          |                           |
+|  37 |                             HASH JOIN OUTER                            |                             |     102 | 2352 |         1 |     +3 |     1 |     9841 |      |       |   5MB |     8.33 | Cpu (1)                   |
+|  38 |                              NESTED LOOPS                              |                             |     102 | 2349 |         1 |     +3 |     1 |     9841 |      |       |     . |          |                           |
+|  39 |                               NESTED LOOPS                             |                             |     104 | 2349 |         1 |     +3 |     1 |     9841 |      |       |     . |          |                           |
+|  40 |                                HASH JOIN                               |                             |     104 | 2036 |         1 |     +3 |     1 |     9841 |      |       |   2MB |          |                           |
+|  41 |                                 TABLE ACCESS BY INDEX ROWID BATCHED    | TREFERENCEENTRY             |     265 |  104 |         1 |     +3 |     1 |      257 |      |       |     . |          |                           |
+|  42 |                                  INDEX RANGE SCAN                      | IREFERENCEENTRY_IDENT       |     265 |    2 |         1 |     +3 |     1 |      257 |      |       |     . |          |                           |
+|  43 |                                 FILTER                                 |                             |         |      |         1 |     +3 |     1 |    18766 |      |       |     . |          |                           |
+|  44 |                                  NESTED LOOPS OUTER                    |                             |     433 | 1932 |         1 |     +3 |     1 |    18766 |      |       |     . |          |                           |
+|  45 |                                   NESTED LOOPS                         |                             |     271 |  577 |         1 |     +3 |     1 |    18766 |      |       |     . |          |                           |
+|  46 |                                    HASH JOIN                           |                             |      74 |  132 |         1 |     +3 |     1 |    10000 |      |       |   2MB |          |                           |
+|  47 |                                     TABLE ACCESS FULL                  | UBRR_TREPGL152DOCUMENT      |    9841 |   29 |         1 |     +3 |     1 |    10000 |      |       |     . |          |                           |
+|  48 |                                     VIEW                               |                             |    1000 |    3 |         1 |     +3 |     1 |        2 |      |       |     . |          |                           |
+|  49 |                                      TABLE ACCESS FULL                 | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|  50 |                                    TABLE ACCESS BY INDEX ROWID BATCHED | TENTRY                      |       4 |    6 |         2 |     +2 | 10000 |    18766 |  522 |   8MB |     . |     8.33 | db file parallel read (1) |
+|  51 |                                     INDEX RANGE SCAN                   | IENTRY_ENTRYGROUPID         |       4 |    3 |         1 |     +3 | 10000 |    18925 |   68 |   1MB |     . |          |                           |
+|  52 |                                   TABLE ACCESS BY INDEX ROWID BATCHED  | TENTRY                      |       1 |    5 |         1 |     +3 | 18766 |        0 |   23 | 368KB |     . |          |                           |
+|  53 |                                    INDEX RANGE SCAN                    | IENTRY_DOCNO                |       2 |    3 |         1 |     +3 | 18766 |    17846 |   61 | 976KB |     . |          |                           |
+|  54 |                                INDEX UNIQUE SCAN                       | IACCOUNT_ACCOUNTNO          |       1 |    2 |         1 |     +3 |  9890 |     9841 |    2 | 32768 |     . |          |                           |
+|  55 |                               TABLE ACCESS BY INDEX ROWID              | TACCOUNT                    |       1 |    3 |         1 |     +3 |  9991 |     9841 |    5 | 81920 |     . |          |                           |
+|  56 |                              VIEW                                      |                             |    1000 |    3 |         1 |     +3 |     1 |        6 |      |       |     . |          |                           |
+|  57 |                               TABLE ACCESS FULL                        | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|  58 |                             INDEX UNIQUE SCAN                          | UK_CLIENTPERSONE            |       1 |    1 |         1 |     +3 |  9841 |      384 |   55 | 880KB |     . |          |                           |
+|  59 |                            TABLE ACCESS BY INDEX ROWID                 | TACCOUNT                    |       1 |    3 |         1 |     +3 |  9841 |     9841 |  479 |   7MB |     . |          |                           |
+|  60 |                             INDEX UNIQUE SCAN                          | IACCOUNT_ACCOUNTNO          |       1 |    2 |         1 |     +3 |  9841 |     9841 |  123 |   2MB |     . |          |                           |
+|  61 |                           INDEX UNIQUE SCAN                            | UK_CLIENTPERSONE            |       1 |    1 |         1 |     +3 |  9841 |      675 |  122 |   2MB |     . |          |                           |
+|  62 |                         TABLE ACCESS BY INDEX ROWID                    | TACCOUNT                    |       1 |    3 |         1 |     +3 |  9138 |     9138 |      |       |     . |          |                           |
+|  63 |                          INDEX UNIQUE SCAN                             | IACCOUNT_ACCOUNTNO          |       1 |    2 |         1 |     +3 |  9138 |     9138 |      |       |     . |          |                           |
+|  64 |                        INDEX UNIQUE SCAN                               | UK_CLIENTPERSONE            |       1 |    1 |           |        |  9138 |          |      |       |     . |          |                           |
+|  65 |                       VIEW                                             |                             |    1000 |    3 |         1 |     +3 |     1 |        6 |      |       |     . |          |                           |
+|  66 |                        TABLE ACCESS FULL                               | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|  67 |                      HASH JOIN OUTER                                   |                             |      92 | 3243 |         1 |     +4 |     1 |      681 |      |       |   2MB |          |                           |
+|  68 |                       NESTED LOOPS OUTER                               |                             |      92 | 3240 |         1 |     +4 |     1 |      681 |      |       |     . |          |                           |
+|  69 |                        NESTED LOOPS                                    |                             |      92 | 3148 |         1 |     +4 |     1 |      681 |      |       |     . |          |                           |
+|  70 |                         FILTER                                         |                             |         |      |         1 |     +4 |     1 |      681 |      |       |     . |          |                           |
+|  71 |                          NESTED LOOPS OUTER                            |                             |      98 | 2854 |         1 |     +4 |     1 |     9841 |      |       |     . |          |                           |
+|  72 |                           NESTED LOOPS                                 |                             |      98 | 2756 |         1 |     +4 |     1 |     9841 |      |       |     . |          |                           |
+|  73 |                            NESTED LOOPS OUTER                          |                             |     101 | 2453 |         1 |     +4 |     1 |     9841 |      |       |     . |          |                           |
+|  74 |                             HASH JOIN OUTER                            |                             |     101 | 2352 |         1 |     +4 |     1 |     9841 |      |       |   5MB |          |                           |
+|  75 |                              NESTED LOOPS                              |                             |     101 | 2349 |         1 |     +4 |     1 |     9841 |      |       |     . |          |                           |
+|  76 |                               NESTED LOOPS                             |                             |     104 | 2349 |         1 |     +4 |     1 |     9841 |      |       |     . |          |                           |
+|  77 |                                HASH JOIN                               |                             |     104 | 2036 |         2 |     +3 |     1 |     9841 |      |       |   2MB |          |                           |
+|  78 |                                 TABLE ACCESS BY INDEX ROWID BATCHED    | TREFERENCEENTRY             |     265 |  104 |         2 |     +3 |     1 |      257 |      |       |     . |          |                           |
+|  79 |                                  INDEX RANGE SCAN                      | IREFERENCEENTRY_IDENT       |     265 |    2 |         2 |     +3 |     1 |      257 |      |       |     . |          |                           |
+|  80 |                                 FILTER                                 |                             |         |      |         1 |     +4 |     1 |    18766 |      |       |     . |          |                           |
+|  81 |                                  NESTED LOOPS OUTER                    |                             |     433 | 1932 |         1 |     +4 |     1 |    18766 |      |       |     . |          |                           |
+|  82 |                                   NESTED LOOPS                         |                             |     271 |  577 |         1 |     +4 |     1 |    18766 |      |       |     . |          |                           |
+|  83 |                                    HASH JOIN                           |                             |      74 |  132 |         1 |     +4 |     1 |    10000 |      |       |   2MB |          |                           |
+|  84 |                                     TABLE ACCESS FULL                  | UBRR_TREPGL152DOCUMENT      |    9841 |   29 |         1 |     +4 |     1 |    10000 |      |       |     . |          |                           |
+|  85 |                                     VIEW                               |                             |    1000 |    3 |         1 |     +4 |     1 |        2 |      |       |     . |          |                           |
+|  86 |                                      TABLE ACCESS FULL                 | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|  87 |                                    TABLE ACCESS BY INDEX ROWID BATCHED | TENTRY                      |       4 |    6 |         1 |     +4 | 10000 |    18766 |      |       |     . |          |                           |
+|  88 |                                     INDEX RANGE SCAN                   | IENTRY_ENTRYGROUPID         |       4 |    3 |         1 |     +4 | 10000 |    18925 |      |       |     . |     8.33 | Cpu (1)                   |
+|  89 |                                   TABLE ACCESS BY INDEX ROWID BATCHED  | TENTRY                      |       1 |    5 |         1 |     +4 | 18766 |        0 |      |       |     . |          |                           |
+|  90 |                                    INDEX RANGE SCAN                    | IENTRY_DOCNO                |       2 |    3 |         1 |     +4 | 18766 |    17846 |      |       |     . |          |                           |
+|  91 |                                INDEX UNIQUE SCAN                       | IACCOUNT_ACCOUNTNO          |       1 |    2 |         1 |     +4 |  9841 |     9841 |      |       |     . |          |                           |
+|  92 |                               TABLE ACCESS BY INDEX ROWID              | TACCOUNT                    |       1 |    3 |         1 |     +4 |  9841 |     9841 |      |       |     . |          |                           |
+|  93 |                              VIEW                                      |                             |    1000 |    3 |         1 |     +4 |     1 |        6 |      |       |     . |          |                           |
+|  94 |                               TABLE ACCESS FULL                        | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+|  95 |                             INDEX UNIQUE SCAN                          | UK_CLIENTPERSONE            |       1 |    1 |         1 |     +4 |  9841 |      675 |      |       |     . |          |                           |
+|  96 |                            TABLE ACCESS BY INDEX ROWID                 | TACCOUNT                    |       1 |    3 |         1 |     +4 |  9841 |     9841 |      |       |     . |          |                           |
+|  97 |                             INDEX UNIQUE SCAN                          | IACCOUNT_ACCOUNTNO          |       1 |    2 |         1 |     +4 |  9841 |     9841 |      |       |     . |          |                           |
+|  98 |                           INDEX UNIQUE SCAN                            | UK_CLIENTPERSONE            |       1 |    1 |         1 |     +4 |  9841 |      384 |      |       |     . |          |                           |
+|  99 |                         TABLE ACCESS BY INDEX ROWID                    | TACCOUNT                    |       1 |    3 |         1 |     +4 |   681 |      681 |      |       |     . |          |                           |
+| 100 |                          INDEX UNIQUE SCAN                             | IACCOUNT_ACCOUNTNO          |       1 |    2 |         1 |     +4 |   681 |      681 |      |       |     . |          |                           |
+| 101 |                        INDEX UNIQUE SCAN                               | UK_CLIENTPERSONE            |       1 |    1 |           |        |   681 |          |      |       |     . |          |                           |
+| 102 |                       VIEW                                             |                             |    1000 |    3 |         1 |     +4 |     1 |        6 |      |       |     . |          |                           |
+| 103 |                        TABLE ACCESS FULL                               | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+| 104 |                    VIEW                                                |                             |    1000 |    3 |         1 |     +4 |     1 |        2 |      |       |     . |          |                           |
+| 105 |                     TABLE ACCESS FULL                                  | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+| 106 |                   VIEW                                                 |                             |    1000 |    3 |         1 |     +4 |     1 |        2 |      |       |     . |          |                           |
+| 107 |                    TABLE ACCESS FULL                                   | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+| 108 |                 TABLE ACCESS BY INDEX ROWID                            | TCARD                       |       1 |    2 |         1 |     +4 |  9819 |      527 |  183 |   3MB |     . |          |                           |
+| 109 |                  INDEX UNIQUE SCAN                                     | ICARD_PAN_MBR               |       1 |    1 |         1 |     +4 |  9819 |      527 |    4 | 65536 |     . |          |                           |
+| 110 |               VIEW                                                     |                             |    1000 |    3 |         1 |     +4 |     1 |      122 |      |       |     . |          |                           |
+| 111 |                TABLE ACCESS FULL                                       | SYS_TEMP_0FD9D78F9_DCC14611 |    1000 |    3 |           |        |     1 |          |      |       |     . |          |                           |
+| 112 |          TABLE ACCESS BY INDEX ROWID                                   | TREFERENCETERMINAL          |       1 |    1 |           |        |       |          |      |       |     . |          |                           |
+| 113 |           INDEX UNIQUE SCAN                                            | TERMINAL_PKEY               |       1 |      |           |        |       |          |      |       |     . |          |                           |
+| 114 |         TABLE ACCESS FULL                                              | TREFERENCETERMINAL          |       1 |    1 |         1 |     +4 |     1 |     131K |      |       |     . |          |                           |
+====================================================================================================================================================================================================================================="

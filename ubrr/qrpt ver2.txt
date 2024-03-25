@@ -1,0 +1,50 @@
+set serveroutput on
+set feedback on
+set verify off
+set pages 5000        -- результат рабивается на страницы, только при результирующем датасете в 500 строк
+set long 30000       -- для вывода текст запроса (по дефолту 80)
+set timing off
+define sql_id="6mc71tv6p5fyy"
+
+
+TTITLE LEFT ========================================= SKIP 1 -
+       LEFT '#1. COMMON SQL INFO (SQLAREA)'           SKIP 1 -
+       LEFT ========================================= SKIP 1 
+/
+select sql_fulltext from v$sqlarea
+where sql_id = '&sql_id';
+
+select 
+    scn.command_name, do.object_name || ' (line : ' || sa.program_line# || ')' object_name,
+    sql_id, plan_hash_value, optimizer_mode, parsing_schema_name, module, action, last_active_time,
+    version_count, parse_calls, executions, disk_reads, direct_reads, direct_writes, buffer_gets, rows_processed, 
+    elapsed_time/1e6, cpu_time/1e6, user_io_wait_time/1e6, concurrency_wait_time/1e6, plsql_exec_time/1e6, java_exec_time/1e6, 
+    sql_profile, sa.sql_plan_baseline
+from v$sqlarea sa
+    join dba_hist_sqlcommand_name scn using (command_type)
+    left join dba_objects do on do.object_id = sa.program_id
+where sql_id = '&sql_id';
+
+
+TTITLE LEFT ========================================= SKIP 1 -
+       LEFT '#2. BIND VARIABLES (V$SQL_BIND_CAPTURE)' SKIP 1 -
+       LEFT ========================================= SKIP 1 
+/
+col name for a7
+col value_string for a20
+select name, position, datatype_string, was_captured, last_captured, value_string 
+from v$sql_bind_capture where sql_id = '&sql_id';
+
+select 
+    sql_id, 
+    scn.command_name, do.object_name || ' (line : ' || sa.program_line# || ')' object_name,
+    last_active_time,
+    
+    sql_id, plan_hash_value, optimizer_mode, parsing_schema_name, module, action, 
+    version_count, parse_calls, executions, disk_reads, direct_reads, direct_writes, buffer_gets, rows_processed, 
+    elapsed_time/1e6, cpu_time/1e6, user_io_wait_time/1e6, concurrency_wait_time/1e6, plsql_exec_time/1e6, java_exec_time/1e6, 
+    sql_profile, sa.sql_plan_baseline
+from v$sqlarea sa
+    join dba_hist_sqlcommand_name scn using (command_type)
+    left join dba_objects do on do.object_id = sa.program_id
+where sql_id = '&sql_id';

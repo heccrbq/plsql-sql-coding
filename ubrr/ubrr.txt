@@ -1,0 +1,244 @@
+=================================================
+== Links                                       ==
+=================================================
+
+My personal ZOOM
+https://us05web.zoom.us/j/5624998304?pwd=MDk0OWNaVjRGbFJUL2k4dDI1cGdzZz09
+room: 562 499 8304
+pwd : SWRni2
+
+Confluence. Пространство TWR
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=211714069
+
+ROCKET chat
+https://rocketchat.lan.ubrr.ru/channel/general
+
+Web mail client
+https://zimbra.lan.ubrr.ru/#1
+
+Checklist code review:
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=283538461
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=275146346       -- get_files_by_pull_request
+
+Naming convention
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=269093909
+
+ИПА Быков Дмитрий Викторович
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=305168728
+
+Репозитории GIT
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=268668014
+
+Правила работы в GIT'e
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=268668047
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=275146346
+
+Kanban доска
+https://jira.lan.ubrr.ru/secure/RapidBoard.jspa?rapidView=352&quickFilter=3669
+
+Отчет по затраченному времени
+https://jira.lan.ubrr.ru/secure/TimesheetReport.jspa?reportKey=jira-timesheet-plugin%3Areport&selectedProjectId=11532&reportingDay=0&startDate=2024-02-01&endDate=2024-02-29&targetUser=u00033859&projectRoleId=&filterid=&priority=&commentfirstword=&weekends=true&sum=day&groupByField=&sortBy=&sortDir=ASC&%D0%94%D0%B0%D0%BB%D0%B5%D0%B5=%D0%94%D0%B0%D0%BB%D0%B5%D0%B5
+
+assignee = currentUser() AND project=TWR and resolved >= 2023-02-01 and resolved <= 2023-03-01 and type = Задача and status in (Закрыт, Готово)
+
+Общебанковская TNS
+C:\oracle\client\admin\product\12.1.0\client_1\network\admin
+
+Инструкция по работе с репозиторием prepare_update
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=252984881
+
+Документация по IT(A)
+http://svn.lan.ubrr.ru/
+
+Лицензии IDEA
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=264456801
+
+Поиск контактов сотрудников
+http://www.lan.ubrr.ru/communication/phone
+
+Проверка ZNI
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=318836128
+
+Performance Review
+https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=137232425
+
+Grafana
+http://grafana.lan.ubrr.ru/d/eLjhNF2Zz1/twcms-database-testovyi-landshaft?orgId=26&refresh=1m&var-datasource=zabbix&var-group=%D0%A2%D0%B5%D1%81%D1%82%2FTWCMS&var-host=ztwr.dbs.ubrr.ru&var-application=DB%2FOracle
+
+
+=================================================
+== Access for a new employee                   ==
+=================================================
+
+List of the systems:
+------------------------
+	Name				Link												Credentials						Details
+	------------------- --------------------------------------------------- ------------------------------- ----------------------------------
+	Jira UBRR			https://jira.lan.ubrr.ru/							use credentials for Novell
+	Jira K+				https://helpdesk.compassluxe.com/browse/UBRR-6375	need to create a new user		contact with Дмитрий Борисов to get a certificate with password
+	Bitbucket			https://bitbucket.lan.ubrr.ru/  					use credentials for Novell		need acces to project Core_System. Repo: db_twr, prepare_update
+	Confluece			https://conflu.lan.ubrr.ru/							use credentials for Novell
+	E-mail Zimbra		https://zimbra.lan.ubrr.ru/							use credentials for Novell
+	IT(A)				local												need to create a new user		contact with Иван Корнилов to create a new user
+	ITC					local												need to create a new user		contact with the TWR analytics to create a new user
+
+
+how to create an ITC user:
+--------------------------------
+	1. Settings - Personal Settings
+	2. Context menu on the Connections folder - Import from file
+	3. Choose the ConfigITC file
+	4. File -> Connect -> rtwr (for example) -> A4M/A4M1
+	5. Пуск - Справочники - Справочник операционистов
+	6. Добавить - Выбрать (операциониста) - double click on the chosen person
+	7. Имя при регистрации - BYKOVD
+	8. Пароль - BYKOVD (Имя при регистрации should equal Пароль)
+		8.1 For ВУЗ Name should contain _VUZ (BYKOVD_VUZ), password - Name only (BYKOVD)
+	9. Системный профиль - DEFAULT
+   10. Click on tab Группы операционистов - Добавить button - Right click - Пометить все - Ввод - Ввод
+   11. Wait 10-15 seconds and check new user
+   12. Выход
+   13. Need to check new users's credentials
+
+
+=================================================
+== Contacts                                    ==
+=================================================
+
+Colleques:
+-------------
+	Name				Details								E-mail	
+	------------------- ----------------------------------- -------------------------
+	Дмитрий Борисов		по любым вопросам					borisovd@ubrr.ru
+	Дмитрий Корольков	Руководитель направления Oracle		korolkov@ubrr.ru
+	Дмитрий Гусев		лицензирование PLSQL Developer		GusevD@ubrr.ru
+						доступ к репам в bitbucket
+	Иван Корнилов		Заводит учетки в IT(A)				kornilovi@ubrr.ru
+	Гасан Абдурагимов   Jira: доступ к заявкам в ДИТ        abduragimov@ubrr.ru
+	Виктор Анцупов		Выгрузка с прод сред				antsupovv@ubrr.ru
+	Юлия Смирнова		Выгрузка с прод сред				smirnovau@ubrr.ru
+
+
+=================================================
+== Отпуск                                      ==
+=================================================
+
+Открываем #3, тыкаем на заявление сотрудника, скачиваем "Заявление о предоставлении ежегодного отпуска". Распечатываем, подписываем и присылаем назад в УБРиР.
+Идем в ТЕЗИС https://edm.lan.ubrr.ru/app/#! и далее действуем по PDF инструкции из #4. 
+Далее ждем, пока согласуют все указанные в ТЕЗИСе люди, получаем приказ.
+Общий порядок оформления отпуска описан в #1 и #2.
+
+Отсканированное заявление требуется также отправить личный письмом Тертышному АГ с темой "Заявление на отпуск Быков" и текстом:
+"Прошу согласовать недельный отпуск в период с 30.10.2023 по 05.11.2023.".
+
+Полезные ссылки:
+#1 - https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=324764405
+#2 - https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=269103463
+#3 - http://www.lan.ubrr.ru/staff/322/1675/1810
+#4 - https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=306338942
+
+
+=================================================
+== Recyclebin                                  ==
+=================================================
+
+Вторник до 11 - установка на четверг, пятница - на вторник.
+
+Шаблон презентаций:
+    https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=287128080
+
+
+
+
+Cоздание подзадачи на CodeReview в JIRA (https://conflu.lan.ubrr.ru/pages/viewpage.action?pageId=283538461):
+	В задаче: ЕЩЁ -> создать подзадачу с типом "КодРевью" и меткой "АВТ_0"
+		Тема подзадачи: Код ревью по задаче TWR-147
+		Исполнитель: МР
+		Описание: Ссылка на основную задачу, Описание какие объекты затронуты, наименование инстанса, где лежит функционал, путь к нему в ITC (если есть)
+	Связываем Code Review задачу с основной: ЕЩЁ -> связать
+	
+
+
+
+ITC 
+	Загрузка пакетной операции:
+		Пуск - справочник Пакетных операций - Импорт (файл должен быть в 1251 или UTF-8 кодировке) - путь к файлу + кодировка - Загрузить - Выбрать ПО - Сохранить
+		После загрузки пакетной операции необходимо создать шаблон для каждого модуляАбдарухдимов
+	Создание шаблона ПО для модуля ПО:
+		
+	Пуск - Функции - Система разграничения прав - Права
+
+	
+
+
+
+
+Разработчик берет задачу, находящуюся в статусе Analyze End – для дальнейшей разработки задачи
+Аналитик берет задачу, находящуюся в статусе Dev End  - для дальнейшего тестирования задачи
+
+
+
+
+
+Текущие боли:
+	Проблемы человекоресурсов
+		Отсутствует тимлид разработки
+	Тестирование
+		Отсутствуют тестировщики как явление
+		Отсутствуют автотесты
+		Отсутствуют юнит тесты
+		Отсутствует нагрузочное тестирование
+	Код-ревью и ТЗ-ревью
+		Нарушена процедура внутреннего код-ревью
+	Проблемы при работе с задачами
+		Трудности при оценке задач
+		Трудности при постановке сроков реализации
+	Пробелы в экспертизе
+		Нет описания вендорских пакетов. Скудная документация, не все процессы задокументированы, не все таблицы расписаны. 
+		Нет семантического описания работы всего процесса, не описана общая логика работы.
+	Отсутствуют регламенты внесения изменений в конфигурацию TWCMS
+		Нет четкого регламента вноса изменений в систему (в посл время не сталкивались)
+		Нет уведомлений об изменении тестовых ландшафтов
+	Жесткая зависимость от других команд
+		Зависимость от команды ОНБС в плане установки обновлений, снятия хостовой отладки, снятия трассы
+	Проблемы ПО (Image)
+		запрос пароля SYS
+	Невозможность снятия отладки для оперативного решения проблем
+		AWR
+		ASH
+		Трасса
+		Хостовая отладка
+	Проблемы архитектуры
+		в TWCMS слишком много онлайн-процессов 
+		Куча ДБ линков, нужен переход на апи, шину
+		Таблицы занимают много места, требуется архивирование, партиционирование
+		Таблицы требуют фрагментации
+		Много ручного труда, мало чего не автоматизировано
+		распараллелить экстракт/рефреш
+		проводки, генерация номера карт - всё делается через МПК (модуль пластиковых карт). Надо переходить на слабосвязанную связь
+		
+		
+Векторы развития платформ
+	ТЕХНОЛОГИИ
+		переход на новые стэки технологий
+		переход на новые готовые решения CompassPlus
+		переход на альтернативные решеиня (уход о CompassPlus)
+		Гибридное решение (часть функций на CompassPlus, часть на решении от других вендоров, часть самописная)
+		Legacy - переход от Оракл Формс и самописного ПО к централизованному ПО (ITC)
+		Разработка правил и внесение изменений в систему (и инструменты контроля)
+		Безопасность персональных данных (обезличенные данные на тестовых базах)
+		Масштабирование (серверные емкости, масштабирование процессов)
+		Постановка процессов на мониторинг. Активное и проактивное решение проблем. Оценка пределов возможностей
+	БИЗНЕС ПРОЦЕССЫ
+		Описание существующих процессов. Построение карты процессов интеграций между системами
+		Отказ от DBLINKов и переход к АПИ
+		Автоматизация процессов. Переход от ручного труда к автоматизированному
+		Перераспределение зон ответственности и перенос процессов из системы в систему
+		Определение владельца бизнес-процесса/продукта
+	ЧЕЛОВЕКОРЕСУРСЫ (КОМАНДА)
+		Актуализация процессов в JIRA
+		Корпоративная культура
+		Школа аналитиков
+		Школа разработчиков
+		Школа тестировщиков
+		Хакатон

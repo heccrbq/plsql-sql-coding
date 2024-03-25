@@ -1,0 +1,96 @@
+Чтение из файла:
+ - текстовый
+ - xls / csv
+ - pdf
+ 
+Запись в файл:
+ - текстовый
+ - xls / cvs
+ - pdf
+ 
+
+
+function CreatePath (pPath in varchar2) 
+  return varchar2 is
+  begin
+    Term.Dir_Create(pPath);
+    return pPath;
+  exception
+    when others then
+      text.append(svIdText,'    Ошибка созд. каталога: ' || pPath); 
+      return null;
+  end CreatePath;
+
+
+
+-- Чтение из файла
+
+function GetListFromFile (p_File varchar2)
+  return  tblchar100 is
+    v_Result     tblchar100 := tblchar100();
+    v_FileHandle pls_integer := null;
+    v_Buffer     varchar2(4000);
+    v_Count      number := 0;
+  begin
+    if Term.FileExists(p_File) then
+      if Term.CheckFileEncode(p_File,pEncode => 'UTF8') then
+        v_FileHandle := Term.FileOpenRead(p_File,pEnc => 'UTF8');
+      else
+        v_FileHandle := Term.FileOpenRead(p_File,pEnc => 'Cp1251');
+      end if;
+      while Term.ReadRecord(v_FileHandle, v_Buffer) loop
+        v_Count := v_Count + 1;
+        v_Result.Extend;
+        v_Result(v_Count) := substr(v_Buffer,1,100);
+      end loop
+      Term.Close(v_FileHandle);
+    end if;
+    return v_Result;
+  exception
+    when others then
+      Error.Save(c_PackageName || '.GetListFromFile');
+      Term.Close(v_FileHandle);
+      raise;
+  end;
+  
+/
+
+
+
+
+/* Скрипт загрузки объектов МБ во временную таблицу */
+declare
+  cInputFile     constant varchar2(200):= 'c:\!_WORK\TWR-1643\Files\No_object.txt';
+  cLimit number := 1000;
+  vFileHandle number;
+  vBuffer     varchar2(100);
+  vCnt        number;
+  
+begin
+  
+  if Term.FileExists(cInputFile) then
+    if Term.CheckFileEncode(cInputFile,pEncode => 'UTF8') then
+      vFileHandle := Term.FileOpenRead(cInputFile,pEnc => 'UTF8');
+    else
+      vFileHandle := Term.FileOpenRead(cInputFile,pEnc => 'Cp1251');
+    end if;
+    vCnt := 0;
+    while Term.ReadRecord(vFileHandle, vBuffer) loop
+     vBuffer := replace(vBuffer,CHR(9),' ');
+     vBuffer := substr(vBuffer,1,instr(vBuffer,' ',1)-1);
+     vBuffer := substr(trim(vBuffer),1,20);
+      insert into TUBRR_TWFA_LOAD(customer,load_date,upd_date)
+        values (vBuffer,sysdate,null);
+      vCnt := vCnt + 1;  
+      if vCnt = cLimit then
+        commit;
+      end if;  
+    end loop;
+      commit;
+      Term.Close(vFileHandle);
+  end if;
+  exception
+    when others then 
+      Term.Close(vFileHandle);
+end;
+/

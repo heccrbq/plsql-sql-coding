@@ -1,0 +1,231 @@
+===================================
+==    ELAPSED TIME DIFFERENCE    ==
+===================================
+
+with 
+    function bsln_phv(p_signature dba_sql_plan_baselines.signature%type, p_plan_name dba_sql_plan_baselines.plan_name%type) return number deterministic
+    is
+        l_return$ v$sqlarea.plan_hash_value%type;
+    begin
+        select
+            value(xt).getnumberval()
+        into l_return$
+        from sys.sqlobj$ o,   -- used in dbms_xplan.display_sql_plan_baseline => spm_internal.fetch_plan_id_using_plan_name
+            sys.sqlobj$plan op,
+            xmltable('/other_xml/info[@type="plan_hash"]/text()' passing xmltype(op.other_xml))xt
+        where o.plan_id = op.plan_id
+            and o.signature = op.signature
+            and o.signature = p_signature
+            and o.name = p_plan_name
+            and op.other_xml is not null;
+
+        return l_return$;
+    end bsln_phv;
+
+    function code(p_source varchar2, p_sql_id v$sqlarea.sql_id%type, p_phv v$sqlarea.plan_hash_value%type, p_snap_id dba_hist_snapshot.snap_id%type) return varchar2 deterministic
+    is
+        l_return$ varchar2(4000) := 'set serveroutput on size unl';
+    begin
+        if p_source is null or p_sql_id is null or (p_phv is null or p_phv = 0) then
+            return null;
+        end if;
+
+        if upper(p_source) = 'AWR' then
+            if p_snap_id is null then
+                raise_application_error(-20162, 'SNAP_ID cannot be nullable.', true);
+            end if;
+
+            l_return$ := l_return$                                                                                                          || utl_tcp.crlf || 
+                'begin'                                                                                                                     || utl_tcp.crlf ||
+                '    dbms_output.put_line('                                                                                                 || utl_tcp.crlf ||
+                '        dbms_spm.load_plans_from_awr('                                                                                     || utl_tcp.crlf ||
+                '            begin_snap   => ' || (p_snap_id - 1) || ','                                                                    || utl_tcp.crlf ||
+                '            end_snap     => ' || p_snap_id || ','                                                                          || utl_tcp.crlf ||
+                '            basic_filter => ' || 'q'||'''[ sql_id=''' || p_sql_id ||''' and plan_hash_value=''' || p_phv || ''' ]'','      || utl_tcp.crlf ||
+                '            --'                                                                                                            || utl_tcp.crlf ||
+                '            fixed        =>  ''NO'','                                                                                      || utl_tcp.crlf ||
+                '            enabled      =>  ''YES'''                                                                                      || utl_tcp.crlf ||
+                '        )'                                                                                                                 || utl_tcp.crlf ||
+                '    );'                                                                                                                    || utl_tcp.crlf ||
+                'end;'                                                                                                                      || utl_tcp.crlf ||
+                '/';
+
+        elsif upper(p_source) = 'MEM' then
+
+            l_return$ := l_return$                                                                                                          || utl_tcp.crlf ||
+                'begin'                                                                                                                     || utl_tcp.crlf ||
+                '    dbms_output.put_line('                                                                                                 || utl_tcp.crlf ||
+                '        dbms_spm.load_plans_from_cursor_cache('                                                                            || utl_tcp.crlf ||
+                '            sql_id          => ''' || p_sql_id || ''','                                                                    || utl_tcp.crlf ||
+                '            plan_hash_value => ' || p_phv ||','                                                                            || utl_tcp.crlf ||
+                '            --'                                                                                                            || utl_tcp.crlf ||
+                '            fixed           =>  ''NO'','                                                                                   || utl_tcp.crlf ||
+                '            enabled         =>  ''YES'''                                                                                   || utl_tcp.crlf ||
+                '        )'                                                                                                                 || utl_tcp.crlf ||
+                '    ); '                                                                                                                   || utl_tcp.crlf ||
+                'end;'                                                                                                                      || utl_tcp.crlf ||
+                '/';
+        else
+            raise_application_error(-20162, 'Unknown SOURCE value [' || p_source || ']', true);
+        end if;
+
+        return l_return$;
+    end code;
+
+source(src, sql_id, phv, e, ela, snap_id, lat, sql_text) as (
+    select 'MEM', sql_id, plan_hash_value, sum(executions), round(sum(s.elapsed_time) / greatest(sum(s.executions), 1) / 1e6, 4), null,
+        max(s.last_active_time), max(to_char(substr(sql_fulltext, 1, 4000))) sql_text
+    from v$sql s
+    group by sql_id, plan_hash_value
+    union all
+    select 'AWR', 
+        stat.*,
+        cast(sn.begin_interval_time as date) snap_btime,
+        to_char(substr(t.sql_text, 1, 4000)) sql_text
+    from dba_hist_sqltext t,
+        dba_hist_snapshot sn,
+        (select /*+no_merge*/
+            sql_id, plan_hash_value, round(avg(s.executions_delta)), round(sum(s.elapsed_time_delta) / greatest(sum(s.executions_delta), 1) / 1e6, 4),
+            max(snap_id) snap_id
+        from dba_hist_sqlstat s
+        group by sql_id, plan_hash_value) stat
+    where stat.snap_id = sn.snap_id
+        and stat.sql_id = t.sql_id(+)
+)
+--select * from source;
+
+select s1.src || ' => ' || s2.src source, 
+    case 
+        when s2.phv = 0 or s1.phv = 0 or
+             s2.ela > s1.ela         then 'MISSED DATA'        -- что-то не так с данными для анализа: или phv не такой или план не лучше, чем сейчас
+         when bsln.ela < s2.ela and
+              bsln.used_the_same = 0  then 'USED BETTER PLAN'  -- в baseline'ах есть уже ещё лучше план, который не нужно трогать. Там также могут быть и другие планы
+         when bsln.used_the_same = 1  then 'USED THE SAME'     -- в baseline'ах используется тот же план, что и в phv_fast
+--         when s1.lat <= s2.lat        then 'BAD PLAN OLDER'    -- это означает, что плохой план появился в MEM или AWR после того, как там уже был хороший план
+         else '-'                                              -- в остальных случаях. То есть если у запроса такой статус, то это кандидат для SPM
+    end status,
+    s1.sql_id, s1.phv phv_slow, s2.phv phv_fast, s1.e e_slow, s2.e e_fast, s1.ela ela_slow, s2.ela ela_fast, bsln.ela ela_bsln,
+    case when s2.ela <> 0 then round(s1.ela/s2.ela, 2) end coeff,
+    numtodsinterval((s1.ela - s2.ela) * s1.e, 'second') profit,
+    nvl2(bsln.last_executed, 'YES (' || bsln.phv_count || ')', '-')  has_baseline,
+    bsln.last_executed, s1.lat lat_source_from, s2.lat lat_source_to, 
+    code(s2.src, s2.sql_id, s2.phv, s2.snap_id) baseline_code
+from source s1, source s2
+    outer apply (
+        -- выбираю максимальное время выполнения по baseline'ам для того, чтоюы не пропустить момент, когда в SPM будет загружен плохой план
+        select 
+            count(case when s2.phv = bsln_phv(b.signature, b.plan_name) then 1 end) used_the_same,
+            count(1) phv_count,
+            cast(max(b.last_executed) as date) last_executed,
+            round(max(elapsed_time/greatest(executions,1)) / 1e6, 4) AS ela
+        from dba_sql_plan_baselines b
+        where to_char(substr(sql_text,1,4000)) = s2.sql_text
+            and accepted = 'YES'
+    ) bsln
+where s1.sql_id = s2.sql_id and s1.phv <> s2.phv and s1.ela > s2.ela 
+--    and s1.sql_id = 'gka68c27fhbph'
+--    and s1.src = 'MEM' and s2.src = 'MEM'
+--order by coeff desc nulls last;
+order by profit desc nulls last;
+/
+
+
+select st.sql_id, st.plan_hash_value, st.optimizer_mode,
+    sum(st.executions_delta) e, sum(st.parse_calls_delta) parse,
+    round(avg(st.elapsed_time_delta/greatest(st.executions_delta,1)), 2) ela, round(avg(st.cpu_time_delta/greatest(st.executions_delta,1)), 2) cpu,
+    cast(max(begin_interval_time) as date) last_active_time
+from dba_hist_sqlstat st
+    join dba_hist_snapshot sn using (snap_id)
+where st.sql_id  = '234nj0dvzwh65'
+group by st.sql_id, st.plan_hash_value, st.optimizer_mode, st.sql_profile
+order by ela desc;
+
+
+
+select sql_id, plan_hash_value, child_number, elapsed_time, executions, sql_profile, sql_plan_baseline, program_id, program_line#, sql_fulltext from v$sql where sql_id = '32w2c6p5dhydd';
+select * from table(dbms_xplan.display_cursor('bx8tzzxp058cd'));
+select * from table(dbms_xplan.display_awr('bx8tzzxp058cd'));
+select * from table(dbms_xplan.display_sql_plan_baseline('SQL_HANDLE'));
+
+
+select * from dba_sql_plan_baselines where to_char(substr(sql_text,1,4000)) = (select to_char(substr(sql_text,1,4000)) from dba_hist_sqltext where sql_id = 'bx8tzzxp058cd');
+
+
+with source as (
+    select 'bx8tzzxp058cd' sql_id, trunc(sysdate) - 30 btime, sysdate + 1 etime from dual
+ )
+select 
+    s.sql_id AS sqlid,
+    s.plan_hash_value phv,
+    trunc(w.begin_interval_time) AS tl,
+    sum(s.executions_delta) AS e,
+    round(sum(s.elapsed_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS ela,
+    round(sum(s.cpu_time_delta)         / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS cpu,
+    round(sum(s.iowait_delta)           / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS io,
+    round(sum(s.ccwait_delta)           / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS cc,
+    round(sum(s.apwait_delta)           / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS app,
+    round(sum(s.plsexec_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS plsql,
+    round(sum(s.javexec_time_delta)     / greatest(sum(s.executions_delta), 1) / 1e6, 4) AS java,
+    round(sum(s.disk_reads_delta)       / greatest(sum(s.executions_delta), 1)) AS disk,
+    round(sum(s.buffer_gets_delta)      / greatest(sum(s.executions_delta), 1)) AS lio,
+    round(sum(s.rows_processed_delta)   / greatest(sum(s.executions_delta), 1)) AS r,
+    round(sum(s.parse_calls_delta)      / greatest(sum(s.executions_delta), 1)) AS pc,
+    round(sum(s.px_servers_execs_delta) / greatest(sum(s.executions_delta), 1)) AS px
+from source src,
+    dba_hist_sqlstat s,
+    dba_hist_snapshot w
+where s.snap_id = w.snap_id
+    and s.instance_number = w.instance_number
+    and s.sql_id = src.sql_id
+    and w.begin_interval_time between src.btime and src.etime
+group by trunc(w.begin_interval_time),
+    s.sql_id,
+    s.plan_hash_value
+order by tl desc, ela * greatest(e,1) desc nulls last;
+
+
+
+
+
+=========================================================================================
+
+
+
+set serveroutput on size unl
+declare
+    l_source_sql_id  v$sqlarea.sql_id%type := 'fyz1zv4xxpa92';
+    l_targer_sql_phv v$sqlarea.plan_hash_value%type := 163918453;
+    l_sql_fulltext   v$sqlarea.sql_fulltext%type;
+begin
+    select sql_fulltext
+    into l_sql_fulltext
+    from v$sqlarea
+    where sql_id = l_source_sql_id
+        and rownum = 1;
+ 
+    dbms_output.put_line(
+        dbms_spm.load_plans_from_cursor_cache(
+            sql_id          => l_source_sql_id,
+            plan_hash_value => l_targer_sql_phv,
+            sql_text        => l_sql_fulltext,
+            fixed           => 'NO',
+            enabled         => 'YES'
+        )
+    ); 
+end;
+/
+
+
+
+set serveroutput on size unl
+begin   
+      dbms_output.put_line(
+          dbms_spm.load_plans_from_awr(begin_snap => 119480,
+                                       end_snap =>   119481,
+                                       basic_filter => q'[ sql_id='13atzsr5u80pb' and plan_hash_value='437763420' ]',
+              fixed           => 'NO',
+              enabled         => 'YES'
+          )
+      ); 
+end;
+/

@@ -1,0 +1,57 @@
+"LEGEND:
+.......
+
+EQ         : Used in single table EQuality predicate
+RANGE      : Used in single table RANGE predicate
+LIKE       : Used in single table LIKE predicate
+NULL       : Used in single table is (not) NULL predicate
+EQ_JOIN    : Used in EQuality JOIN predicate
+NONEQ_JOIN : Used in NON EQuality JOIN predicate
+FILTER     : Used in single table FILTER predicate
+JOIN       : Used in JOIN predicate
+GROUP_BY   : Used in GROUP BY expression
+...............................................................................
+
+###############################################################################
+
+COLUMN USAGE REPORT FOR A4M.TDOCUMENT
+.....................................
+
+1. BRANCH                              : EQ RANGE EQ_JOIN 
+2. CHILDDOCNO                          : EQ NULL EQ_JOIN 
+3. CLERKCODE                           : EQ EQ_JOIN 
+4. DOCNO                               : EQ RANGE NULL EQ_JOIN NONEQ_JOIN 
+5. DOCTYPE                             : EQ EQ_JOIN 
+6. NEWDOCNO                            : EQ NULL EQ_JOIN NONEQ_JOIN 
+7. OBJECTUID                           : EQ NULL EQ_JOIN 
+8. OLDDOCNO                            : EQ NULL EQ_JOIN 
+9. OPDATE                              : EQ RANGE EQ_JOIN NONEQ_JOIN 
+10. PARENTDOCNO                        : EQ NULL EQ_JOIN 
+11. STATION                            : EQ EQ_JOIN 
+12. SYSTEMDATE                         : EQ RANGE 
+13. (OPDATE)                           : FILTER JOIN GROUP_BY 
+14. (BRANCH)                           : FILTER JOIN GROUP_BY 
+15. (BRANCH, DOCNO)                    : FILTER JOIN 
+16. (BRANCH, OPDATE)                   : FILTER JOIN 
+17. (OPDATE, CLERKCODE)                : FILTER 
+18. (DOCNO, OPDATE)                    : FILTER 
+19. (BRANCH, DOCNO, OPDATE)            : FILTER 
+20. (BRANCH, OPDATE, CLERKCODE)        : FILTER 
+21. (BRANCH, OPDATE, NEWDOCNO)         : FILTER 
+22. (BRANCH, DOCNO, OPDATE, NEWDOCNO)  : FILTER 
+23. (BRANCH, DOCTYPE, OPDATE, 
+     NEWDOCNO)                         : FILTER 
+24. (BRANCH, OPDATE, CLERKCODE, 
+     SYSTEMDATE)                       : FILTER 
+25. (BRANCH, DOCNO, OPDATE, CLERKCODE) : FILTER 
+26. (BRANCH, DOCNO, DOCTYPE, OPDATE, 
+     NEWDOCNO)                         : FILTER 
+27. (BRANCH, OPDATE, CLERKCODE, 
+     STATION, SYSTEMDATE)              : FILTER 
+###############################################################################
+
+345 "Дефект TWCMS. Долго открывается форма "Договоры физических лиц"
+451 Проблема МБ/ИБ: медленная работа запросов [REPUBRR]
+598 Ztwr: установить пакеты К+
+604 деградация одного из этапов ВпТСП
+OBOT-873	Деградация расчета капитала	
